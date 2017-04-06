@@ -1,9 +1,4 @@
-require 'email_confirmation_controller_base'
-
 class UserController < ApplicationController
-  skip_before_filter :require_login
-
-  include ::EmailConfirmationController
 
   def update_user_settings
     return do_403 unless logged_in?
