@@ -12,7 +12,7 @@ Rails.application.routes.draw do
 
     # User confirmation pages
     get '/confirm/:token' => 'user#confirm', as: :confirm
-    post '/doconfirm' => 'user#do_confirm', as: :do_confirm
+    match '/doconfirm' => 'user#do_confirm', as: :do_confirm, via: :all
   end
 
   # OAuth enpoints
