@@ -1,4 +1,8 @@
+require 'registration_steps'
+
 class ConferenceRegistration < ActiveRecord::Base
+  include ::RegistrationSteps
+
   belongs_to :conference
   belongs_to :user
   has_many :conference_registration_responses
@@ -6,7 +10,7 @@ class ConferenceRegistration < ActiveRecord::Base
   AttendingOptions = [:yes, :no]
 
   def languages
-    user.present? ? user.languages : [I18n.default_locale.to_sym]
+    user.present? && user.languages.present? ? user.languages : [I18n.default_locale.to_sym]
   end
 
   def self.all_housing_options
@@ -29,8 +33,20 @@ class ConferenceRegistration < ActiveRecord::Base
     [:vegan, :smoking, :pets, :quiet]
   end
 
+  def self.all_payment_methods
+    [:paypal, :on_arrival, :none]
+  end
+
+  def self.all_languages
+    User.AVAILABLE_LANGUAGES
+  end
+
   def city
     city_id.present? ? City.find(city_id) : nil
+  end
+
+  def attending?
+    is_attending != 'n'
   end
 
   def status(was = false)
@@ -58,13 +74,20 @@ class ConferenceRegistration < ActiveRecord::Base
       if (conference.registration_status == :pre && new_status == :preregistered) ||
         (conference.registration_status == :open && new_status == :registered)
 
-        UserMailer.send_mail :registration_confirmation do
-          {
-            :args => self
-          }
-        end
+        UserMailer.send_mail(self)
       end
     end
+  end
+
+  def potential_provider?
+    return false unless city.present? && conference.present?
+    conditions = conference.provider_conditions || Conference.default_provider_conditions
+    return City.distance_less_than(conference.city, city, conditions['distance']['number'], conditions['distance']['unit'])
+  end
+
+  def nearby_organizations
+    return nil if city_id.nil?
+    Organization.near(city_id).sort { |o1, o2| o1.name.downcase <=> o2.name.downcase }
   end
 
 private
