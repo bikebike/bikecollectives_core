@@ -14,3 +14,14 @@ gemspec
 # gem 'byebug', group: [:development, :test]
 
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
+gem 'sqlite3'
+gem 'lingua_franca', git: 'https://github.com/lingua-franca/lingua_franca.git', branch: '2017'
+gem 'carrierwave'
+gem 'carrierwave-imageoptimizer'
+gem 'mini_magick'
+gem 'geocoder'
+gem 'sorcery'
+gem 'database_cleaner'
+gem 'guard'
+gem 'guard-minitest'
+gem 'wdm', '>= 0.1.0' if Gem.win_platform?

@@ -1,21 +1,64 @@
 class Location < ActiveRecord::Base
-	#attr_accessible :title, :country, :territory, :city, :street, :postal_code, :latitude, :longitude
-	has_many :locations_organization
-	has_many :organizations, :through => :locations_organization
+  has_many :locations_organization
+  has_many :organizations, through: :locations_organization
 
-	geocoded_by :full_address
+  geocoded_by :full_address
 
-	reverse_geocoded_by :latitude, :longitude, :address => :full_address
-	after_validation :geocode, if: ->(obj){ obj.country_changed? or obj.territory_changed? or obj.city_changed? or obj.street_changed? or obj.postal_code_changed? or obj.latitude.blank? or obj.longitude.blank? }
+  belongs_to :city
 
-	def full_address
-		addr = title
-		addr = (addr ? ', ' : '') + (street || '')
-		addr = (addr ? ', ' : '') + (city || '')
-		addr = (addr ? ', ' : '') + (territory || '')
-		addr = (addr ? ' ' : '')  + (country || '')
-		addr = (addr ? ' ' : '')  + (postal_code || '')
-		addr
-	end
+  reverse_geocoded_by :latitude, :longitude, address: :full_address
+  after_validation :geocode, if: ->(obj){ obj.country_changed? or obj.territory_changed? or obj.city_changed? or obj.street_changed? or obj.postal_code_changed? or obj.latitude.blank? or obj.longitude.blank? }
+
+  def full_address
+    ([street, [city.city, city.territory].compact.join(' '), [city.country, postal_code].compact.join(' ')] - [nil, '']).join(', ')
+  end
+
+  def territory
+    city.territory
+  end
+
+  def country
+    city.country
+  end
+
+  def slugify
+    [I18n.transliterate(city).strip.gsub(' ', '-').gsub(/[^\w-]/, ''), territory, country].compact.join('_').downcase
+  end
+
+  def translate_territory
+    I18n.t("geography.subregions.#{country}.#{territory}")
+  end
+
+  def translate_country
+    I18n.t("geography.countries.#{country}")
+  end
+
+  def mailing_address
+    [
+      street,
+      "#{city.city}, #{translate_territory}",
+      "#{translate_country} #{postal_code}"
+    ].join("\n")
+  end
+
+  def self.from_city_address(address, city)
+    location = Geocoder.search("#{address}, #{city.to_s}", language: 'en').first
+    Location.new(
+        city_id: city.id,
+        street: address,
+        postal_code: Location.search_data(location.data, 'postal_code'),
+        latitude: location.data['geometry']['location']['lat'],
+        longitude: location.data['geometry']['location']['lng']
+      )
+  end
+
+  def self.search_data(data, key)
+    puts " = #{key} = "
+    data['address_components'].each do |component|
+      puts " -- #{component['long_name']} -- #{component['types']} -- "
+      return component['long_name'] || component['short_name'] if component['types'].include?(key.to_s)
+    end
+    return nil
+  end
 
 end

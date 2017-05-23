@@ -76,7 +76,11 @@ class UserController < ApplicationController
       if email.present?
         user = User.create(email: email, firstname: user_info['name'], fb_id: fb_id, locale: I18n.locale)
       else
-        session[:oauth_update_user_info] = user_info
+        if Rails.env.test?
+          @@_session = {oauth_update_user_info: user_info}
+        else
+          session[:oauth_update_user_info] = user_info
+        end
         return redirect_to oauth_update_path(trailing_slash: true)
       end
     elsif user.fb_id.blank? || user.email.blank?
@@ -89,7 +93,7 @@ class UserController < ApplicationController
       # log in the user
       auto_login(user)
     end
-    
+
     oauth_last_url = (session[:oauth_last_url] || home_path(trailing_slash: true))
     session.delete(:oauth_last_url)
     redirect_to oauth_last_url
@@ -108,13 +112,15 @@ class UserController < ApplicationController
     
     user = User.find_user(params[:email])
 
-    if user.present?
+    if user.present? && flash
       flash[:error] = :exists
       return redirect_to oauth_update_path(trailing_slash: true)
     end
     
     # create the user
-    user = User.new(email: params[:email], firstname: session[:oauth_update_user_info]['name'], fb_id: session[:oauth_update_user_info]['id'])
+    session = @@_session if Rails.env.test?
+    info = session[:oauth_update_user_info]
+    user = User.new(email: params[:email], firstname: info['name'], fb_id: info['id'])
     user.save!
 
     # log in

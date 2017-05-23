@@ -3,8 +3,8 @@ class CreateConferences < ActiveRecord::Migration
     create_table :conferences do |t|
       t.string :title
       t.string :slug
-      t.datetime :start_date
-      t.datetime :end_date
+      t.date :start_date
+      t.date :end_date
       t.text :info
       t.string :poster
       t.string :cover

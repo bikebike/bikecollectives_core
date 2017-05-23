@@ -94,7 +94,7 @@ class User < ActiveRecord::Base
   end
 
   def self.AVAILABLE_LANGUAGES
-    [:en, :es, :fr, :ar]
+    (I18n.respond_to?(:enabled_locales) ? I18n.enabled_locales : [:en, :es, :fr]) + [:ar]
   end
 
   def self.get(email)

@@ -62,10 +62,41 @@ class Organization < ActiveRecord::Base
     s
   end
 
+  def in_city?(city)
+    city = city.id if city.is_a?(City)
+    locations.each do |location|
+      # puts " = #{name} - #{location.city} - #{location.city}:#{city} = "
+      return true if location.city_id == city
+    end
+    return false
+  end
+
   def self.find_by_city(city)
     Organization.joins(:locations).where(locations: {
         city_id: city.is_a?(City) ? city.id : city
       })
+  end
+
+  def self.near(city, radius = 100, unit = :km)
+    in_city_orgs = []
+    near_city_orgs = []
+    Organization.all.select { |org| org.near_city?(city) }
+  end
+
+  def near_city?(city, radius = 100, unit = :km)
+    return true if in_city?(city)
+    locations.each do |location|
+      return true if City.distance_less_than(location.city, city.is_a?(City) ? city : City.find(city), radius, unit)
+    end
+    return false
+  end
+
+  def add_user(user, relationship = :member)
+    UserOrganizationRelationship.create(
+        user_id: user.is_a?(User) ? user.id : user.to_i,
+        organization_id: id,
+        relationship: relationship.to_s
+      )
   end
 
   private

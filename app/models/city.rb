@@ -50,11 +50,19 @@ class City < ActiveRecord::Base
     return translation
   end
 
+  def translate_territory
+    I18n.t("geography.subregions.#{country}.#{territory}")
+  end
+
+  def translate_country
+    I18n.t("geography.countries.#{country}")
+  end
+
   def to_s
     ([
       city,
-      territory.present? && country.present? ? I18n.t("geography.subregions.#{country}.#{territory}") : '',
-      country.present? ? I18n.t("geography.countries.#{country}") : ''
+      territory.present? && country.present? ? translate_territory : '',
+      country.present? ? translate_country : ''
       ] - ['', nil]).join(', ')
   end
 
@@ -70,7 +78,16 @@ class City < ActiveRecord::Base
     # return nil to indicate that the service is down
     return nil unless location.present?
     # see if the city is already present in our database
-    city = City.find_by_place_id(location.data['place_id'])
+    if location.data['place_id'].present?
+      city = City.find_by_place_id(location.data['place_id'])
+    else
+      city = City.search(
+          ([
+            location.data['city'] || location.data['locality'] || location.data['administrative_area_level_2'],
+            location.data['region_name'],
+            location.data['country_name']] - [nil, '']).join(', ')
+        )
+    end
 
     # if we didn't find a match by place id, collect the city, territory, and country from the result
     unless city.present?
@@ -162,5 +179,34 @@ class City < ActiveRecord::Base
 
     # and return it
     return city
+  end
+
+  def self.distance_less_than(city1, city2, max_distance, unit)
+    return false if city1.nil? || city2.nil?
+    return true if city1.id == city2.id
+    return false if max_distance < 1
+    return Geocoder::Calculations.distance_between(
+      [city1.latitude, city1.longitude], [city2.latitude, city2.longitude],
+      units: unit.to_sym) < max_distance
+  end
+
+  def self.from_request(request)
+    begin
+      # if (request.remote_ip == '127.0.0.1' || request.remote_ip == '::1') && request.location
+      #   return request.location
+      # else
+      # end
+      unless request.session['remote_ip'].present?
+        if request.remote_ip =~ /^(127\.0\.0\.1|::1)$/
+          session['remote_ip'] || (session['remote_ip'] = open("http://checkip.dyndns.org").first.gsub(/^.*\s([\d\.]+).*$/s, '\1').gsub(/[^\.\d]/, ''))
+          request.session['remote_ip'] = open('https://api.ipify.org/').first.strip
+        else
+          session['remote_ip'] = request.remote_ip
+        end
+      end
+      return City.search(request.session['remote_ip']) if request.session['remote_ip'].present?
+    rescue
+    end
+    return nil
   end
 end

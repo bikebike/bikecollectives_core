@@ -23,15 +23,15 @@ class Comment < ActiveRecord::Base
     )
   end
 
-    def add_comment(user, comment)
-        Comment.create_for(self, user, comment)
-    end
+  def add_comment(user, comment)
+      Comment.create_for(self, user, comment)
+  end
 
-    def comments
-        Comment.for(self)
-    end
+  def comments
+      Comment.for(self)
+  end
 
-    def reply?
-      model_type == 'comments'
-    end
+  def reply?
+    model_type == 'comments'
+  end
 end

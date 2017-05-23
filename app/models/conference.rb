@@ -127,6 +127,20 @@ class Conference < ActiveRecord::Base
     return end_date < DateTime.now
   end
 
+  def min_arrival_date
+    return nil unless start_date.present?
+    return start_date - 7.days
+  end
+
+  def max_departure_date
+    return nil unless end_date.present?
+    return end_date + 7.days
+  end
+
+  def registration_for(user)
+    ConferenceRegistration.where(conference_id: id, user_id: user).first
+  end
+
   def self.default_payment_amounts
     [25, 50, 100]
   end
