@@ -62,22 +62,22 @@ class ConferenceRegistration < ActiveRecord::Base
     return :registered
   end
 
-  around_update :check_status
+  # around_update :check_status
 
-  def check_status
-    yield
+  # def check_status
+  #   yield
     
-    old_status = status(true)
-    new_status = status
+  #   old_status = status(true)
+  #   new_status = status
 
-    if old_status.present? && old_status != new_status
-      if (conference.registration_status == :pre && new_status == :preregistered) ||
-        (conference.registration_status == :open && new_status == :registered)
+  #   if old_status.present? && old_status != new_status
+  #     if (conference.registration_status == :pre && new_status == :preregistered) ||
+  #       (conference.registration_status == :open && new_status == :registered)
 
-        UserMailer.send_mail(self)
-      end
-    end
-  end
+  #       UserMailer.send_mail(self)
+  #     end
+  #   end
+  # end
 
   def potential_provider?
     return false unless city.present? && conference.present?
