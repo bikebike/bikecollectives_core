@@ -10,6 +10,13 @@ module RegistrationControllerHelper
     }
   end
 
+  def housing_arrival_date_review_data(registration)
+    return {
+      type: :date,
+      value: registration.arrival
+    }
+  end
+
   def housing_arrival_date_step_update(registration, params)
     if params[:date].present?
       registration.arrival = Date.parse(params[:date])
@@ -42,6 +49,13 @@ module RegistrationControllerHelper
     }
   end
 
+  def housing_departure_date_review_data(registration)
+    return {
+      type: :date,
+      value: registration.departure
+    }
+  end
+
   def housing_departure_date_step_update(registration, params)
     if params[:date].present?
       registration.departure = Date.parse(params[:date])
@@ -71,6 +85,16 @@ module RegistrationControllerHelper
     }
   end
 
+  def housing_type_review_data(registration)
+    data = housing_type_step(registration)
+    return {
+      type: :enum,
+      value: data[:housing],
+      options: data[:housing_types],
+      key: "forms.actions.generic.housing_"
+    }
+  end
+
   def housing_type_step_update(registration, params)
     unless ConferenceRegistration.all_housing_options.include?(params[:button].to_sym)
       raise "Invalid housing type '#{params[:button]}'"
@@ -82,7 +106,13 @@ module RegistrationControllerHelper
 
   def housing_companion_check_step(registration)
     return {
-      has_companion: registration.housing_data['companion'].nil? ? nil : registration.housing_data['companion'] != false
+      has_companion: (registration.housing_data || {})['companion'].nil? ? nil : registration.housing_data['companion'] != false
+    }
+  end
+
+  def housing_companion_check_review_data(registration)
+    return {
+      type: :none
     }
   end
 
@@ -100,6 +130,15 @@ module RegistrationControllerHelper
 
   def housing_companion_email_step(registration)
     { email: (registration.housing_data['companion'] || {})['email'] }
+  end
+
+  def housing_companion_email_review_data(registration)
+    email = housing_companion_email_step(registration)[:email]
+    user = User.find_user(email)
+    return {
+      value: user ? user.named_email : email,
+      type: :string
+    }
   end
 
   def housing_companion_email_step_update(registration, params)
@@ -146,28 +185,20 @@ module RegistrationControllerHelper
     { status: :error, message: 'companion_email_required' }
   end
 
-  def housing_companion_invite_step(registration)
+  def housing_bike_step(registration)
     return {
-      email: (registration.housing_data['companion'] || {})['email']
+      bike: registration.bike,
+      bike_options: ConferenceRegistration.all_bike_options
     }
   end
 
-  def housing_companion_invite_step_update(registration, params)
-    if params[:button].to_s == 'next'
-      unless ActionView::Base.full_sanitizer.sanitize(params[:message]).strip.present?
-        return { status: :error, message: 'companion_message_required' }
-      end
-      user = User.create(email: registration.housing_data['companion']['email'])
-      registration.housing_data['companion']['id'] = user.id
-      registration.save
-      send_invitation(user, registration.user, params[:message])
-    end
-    { status: :complete }
-  end
-
-  def housing_bike_step(registration)
+  def housing_bike_review_data(registration)
+    data = housing_bike_step(registration)
     return {
-      bike: registration.bike
+      type: :enum,
+      value: data[:bike],
+      options: data[:bike_options],
+      key: "forms.actions.generic."
     }
   end
 
@@ -182,7 +213,18 @@ module RegistrationControllerHelper
 
   def housing_food_step(registration)
     return {
-      food: registration.food
+      food: registration.food,
+      food_options: ConferenceRegistration.all_food_options
+    }
+  end
+
+  def housing_food_review_data(registration)
+    data = housing_food_step(registration)
+    return {
+      type: :enum,
+      value: data[:food],
+      options: data[:food_options],
+      key: "forms.actions.generic.food_"
     }
   end
 
@@ -195,22 +237,20 @@ module RegistrationControllerHelper
     { status: :complete }
   end
 
-  def housing_allergies_step(registration)
-    { allergies: registration.allergies }
-  end
-
-  def housing_allergies_step_update(registration, params)
-    registration.allergies = params[:allergies] || ''
-    registration.save
-    { status: :complete }
-  end
-
   def housing_other_step(registration)
-    { allergies: registration.other }
+    { other: (registration.housing_data || {})['other'] }
+  end
+
+  def housing_other_review_data(registration)
+    return {
+      type: :text,
+      value: housing_other_step(registration)[:other],
+    }
   end
 
   def housing_other_step_update(registration, params)
-    registration.other = params[:other] || ''
+    registration.housing_data ||= {}
+    registration.housing_data['other'] = params[:other] || ''
     registration.save
     { status: :complete }
   end

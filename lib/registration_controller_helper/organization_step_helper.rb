@@ -5,6 +5,13 @@ module RegistrationControllerHelper
     }
   end
 
+  def org_member_review_data(registration)
+    return {
+      type: :bool,
+      value: org_member_step(registration)[:org_member]
+    }
+  end
+
   def org_member_step_update(registration, params)
     registration.data ||= {}
     case params[:button].to_s
@@ -19,11 +26,44 @@ module RegistrationControllerHelper
     { status: :complete }
   end
 
+  def org_non_member_interest_step(registration)
+    return {
+      interest: registration.data['non_member_interest']
+    }
+  end
+
+  def org_non_member_interest_review_data(registration)
+    return {
+      type: :text,
+      value: registration.data['non_member_interest']
+    }
+  end
+
+  def org_non_member_interest_step_update(registration, params)
+    registration.data['non_member_interest'] = params[:interest]
+    return {
+      status: :complete
+    }
+  end
+
   def org_location_step(registration)
-    city = registration.city || City.from_request(request)
+    city = if registration.data['city_id'].present?
+             City.find(registration.data['city_id'])
+           else
+             registration.city || City.from_request(request)
+           end
     return {
       step_name: (registration.data || {})['is_org_member'] == false ? :your_location : :org_location,
       location: city.to_s
+    }
+  end
+
+  def org_location_review_data(registration)
+    data = org_location_step(registration)
+    return {
+      name: data[:step_name],
+      value: data[:location],
+      type: :string
     }
   end
 
@@ -64,6 +104,10 @@ module RegistrationControllerHelper
     { city: City.find(registration.data['city_id']) }
   end
 
+  def org_location_confirm_review_data(registration)
+    return { type: :none }
+  end
+
   def org_location_confirm_step_update(registration, params)
     if params[:button].to_s == 'yes'
       registration.data ||= {}
@@ -77,7 +121,14 @@ module RegistrationControllerHelper
     orgs = registration.nearby_organizations
     return {
       organizations: orgs,
-      organization: orgs.find { |o| o.host?(registration.user)}
+      organization: orgs.find { |o| o.host?(registration.user) }
+    }
+  end
+
+  def org_select_review_data(registration)
+    return {
+      type: :string,
+      value: registration.user.organizations.first.name
     }
   end
 
@@ -85,19 +136,26 @@ module RegistrationControllerHelper
     if params[:button].to_s == 'create'
       registration.data ||= {}
       registration.data['new_org'] = {}
-      registration.save
     elsif params[:org_id].present?
-      org = Organization.find(params[:org_id])
+      org_id = params[:org_id].to_i
+      registration.data['new_org'] = nil unless (registration.data['new_org'] || {})['id'] == org_id
+      org = Organization.find(org_id)
       raise "Invalid organization" unless org.near_city?(registration.city_id)
+      UserOrganizationRelationship.delete_all(user_id: registration.user_id)
       org.add_user(registration.user_id)
-      return { status: :complete }
     end
 
-    { status: :error, message: 'organization_required' }
+    registration.save
+
+    return { status: :complete }
   end
 
   def org_create_name_step(registration)
     { name: (registration.data['new_org'] || {})['name'] }
+  end
+
+  def org_create_name_review_data(registration)
+    return { type: :none }
   end
 
   def org_create_name_step_update(registration, params)
@@ -120,6 +178,10 @@ module RegistrationControllerHelper
     }
   end
 
+  def org_create_address_review_data(registration)
+    return { type: :none }
+  end
+
   def org_create_address_step_update(registration, params)
     if params[:address].to_s.strip.present?
       registration.data['new_org'] ||= {}
@@ -135,6 +197,10 @@ module RegistrationControllerHelper
 
   def org_create_email_step(registration)
     { email: registration.data['new_org']['email'] }
+  end
+
+  def org_create_email_review_data(registration)
+    return { type: :none }
   end
 
   def org_create_email_step_update(registration, params)
@@ -158,23 +224,36 @@ module RegistrationControllerHelper
     return { address: address }
   end
 
+  def org_create_mailing_address_review_data(registration)
+    return { type: :none }
+  end
+
   def org_create_mailing_address_step_update(registration, params)
     if params[:mailing_address].to_s.strip.present?
       registration.data['new_org'] ||= {}
       registration.data['new_org']['mailing_address'] = params[:mailing_address].strip
 
-      org = if registration.data['new_org']['id'].present?
-              Organization.find(registration.data['new_org']['id'])
-            else
+      is_new = !registration.data['new_org']['id'].present?
+      org = if is_new
               Organization.new
+            else
+              Organization.find(registration.data['new_org']['id'])
             end
       org.name = registration.data['new_org']['name']
       org.email_address = registration.data['new_org']['email']
       org.mailing_address = registration.data['new_org']['mailing_address']
       org.save!
 
-      location = Location.create(street: registration.data['new_org']['address'], city_id: registration.city_id)
-      LocationsOrganization.create(location_id: location.id, organization_id: org.id)
+      if is_new
+        location = Location.create(street: registration.data['new_org']['address'], city_id: registration.city_id)
+        LocationsOrganization.create(location_id: location.id, organization_id: org.id)
+      else
+        location = org.locations.first
+        location.street = registration.data['new_org']['address']
+        location.city_id = registration.city_id
+        location.save!
+      end
+
       org.add_user(registration.user_id)
 
       registration.data['new_org']['id'] = org.id

@@ -4,7 +4,7 @@ module RegistrationSteps
   end
 
   def payment_type_completed?(registration = self)
-    (registration.data || {})['payment_method'].present?
+    registration.attending? && (registration.data || {})['payment_method'].present?
   end
 
   def payment_form_available?(registration = self)
@@ -14,6 +14,6 @@ module RegistrationSteps
   end
 
   def payment_form_completed?(registration = self)
-    registration.registration_fees_paid.present? || (registration.data || {})['pledge'].present?
+    registration.attending? && (registration.registration_fees_paid.present? || (registration.data || {})['payment_amount'].present?)
   end
 end

@@ -2,12 +2,15 @@ require 'registration_steps'
 require 'registration_controller_helper/basic_info_step_helper'
 require 'registration_controller_helper/organization_step_helper'
 require 'registration_controller_helper/housing_step_helper'
-# require 'registration_controller_helper/hosting_step_helper'
+require 'registration_controller_helper/hosting_step_helper'
 require 'registration_controller_helper/payment_step_helper'
 
 module RegistrationControllerHelper
   def current_registration_step(conference, user)
-    get_registration(conference, user).current_step || latest_registration_step(conference, user)
+    registration = get_registration(conference, user)
+    step = registration.current_step
+    return step if step && registration.send("#{step}_enabled?")
+    return latest_registration_step(conference, user) 
   end
 
   def latest_registration_step(conference, user)
@@ -29,28 +32,47 @@ module RegistrationControllerHelper
 
     return generic_registration_error unless RegistrationSteps.is_step?(step) &&
                                              registration.send("#{step}_enabled?")
+    update_registration_step!(step, conference, user, params) do
+      send("#{step}_step_update", registration, params)
+    end
+  end
 
+  def update_registration_step!(step, conference, user, params, &block)
+    registration = get_registration(conference, user)
     result = begin
-               send("#{step}_step_update", registration, params)
+               yield
              rescue Exception => e
+               logger.info e
                generic_registration_error e
              end
 
     registration.data ||= {}
 
-    if (params[:button] || '').to_sym == :back
-      registration.data['current_step'] = registration.step_before(step)
+    button = (params[:button] || '').to_sym
+    if button == :back || button == :review
+      registration.data['current_step'] = if button == :back
+                                            registration.step_before(step)
+                                          else
+                                            registration.latest_step
+                                          end
       registration.save
-      if result[:status] == :error
-        return { status: :complete }
-      end
 
-      return result
+      # ignore errors when we aren't using normal navigation
+      return result[:status] == :error ? { status: :complete } : result
     end
 
     case result[:status]
-    when :complete
+    when :complete, :warning
+      # if we just completed registration
+      if registration.registration_complete? && !registration.data['email_sent']
+        send_registration_confirmation_email(registration)
+        registration.data['email_sent'] = true
+      end
+
       registration.data['current_step'] = registration.step_after(step)
+      registration.save
+    when :goto
+      registration.data['current_step'] = result[:step]
       registration.save
     end
 

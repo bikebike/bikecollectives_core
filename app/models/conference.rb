@@ -145,6 +145,10 @@ class Conference < ActiveRecord::Base
     [25, 50, 100]
   end
 
+  def self.default_currencies
+    [:USD, :CAD]
+  end
+
   def self.conference_types
     {
       annual: { slug: '%{city}%{year}',   title: 'Bike!Bike! %{year}'},

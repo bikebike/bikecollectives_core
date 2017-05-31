@@ -15,37 +15,39 @@ module RegistrationSteps
       :org_member,   # Do you work for or volunteer with a bike collective?
       :org_location, # Where is your collective located?
       :org_location_confirm, # Confirm your location
+      :org_non_member_interest, # What is your interest in attending Bike!Bike!?
       :org_select,   # Which organization in [city] are you associated with?
       :org_create_name,    # What is the name of your organization?
       :org_create_address, # Where in [city] is your organization located?
       :org_create_email,   # What is the organization's email address
       :org_create_mailing_address, # How can we contact your organization by snail mail?
 
-      :housing_arrival_date,   # When will you be arriving in [city]?
-      :housing_departure_date, # When are you planning to leave [city]?
-      :housing_type, # Do you need a place to stay in [city]?
+      :housing_arrival_date,    # When will you be arriving in [city]?
+      :housing_departure_date,  # When are you planning to leave [city]?
+      :housing_type,            # Do you need a place to stay in [city]?
       :housing_companion_check, # Will you be coming with a significant other? 
       :housing_companion_email, # Enter your companion's email address
       # :housing_companion_invite, # [companion] has not registered, please ensure that they do
-      :housing_bike, # Would you like to borrow a bike?
-      :housing_food, # What are your eating habits?
+      :housing_bike,  # Would you like to borrow a bike?
+      :housing_food,  # What are your eating habits?
       # :housing_allergies, # Do you have any allergies that we should be aware of?
       :housing_other, # Is there anything else that we should be aware of?
 
-      :hosting_check, # Are you willing to have guests stay at your home during the conference?
-      :hosting_attending, # Will you be attending the conference yourself?
-      :hosting_address, # What is your street address?
-      :hosting_phone, # What is your phone number?
-      :hosting_space_beds, # How many people can you host on beds or couches?
+      :hosting_check,       # Are you willing to have guests stay at your home during the conference?
+      :hosting_attending,   # Will you be attending the conference yourself?
+      :hosting_address,     # What is your street address?
+      :hosting_phone,       # What is your phone number?
+      :hosting_space_beds,  # How many people can you host on beds or couches?
       :hosting_space_floor, # How much floor-space do you have?
-      :hosting_space_tent, # How many tents could you support in your yard-space?
-      :hosting_start_date, # What is the earliest date that you would be willing to host guests from?
-      :hosting_end_date, # What is the latest date that you would be willing to host guests to?
-      :hosting_rules, # What are your house rules?
-      :hosting_other, # Any other consideration that we should keep in mind?
+      :hosting_space_tent,  # How many tents could you support in your yard-space?
+      :hosting_start_date,  # What is the earliest date that you would be willing to host guests from?
+      :hosting_end_date,    # What is the latest date that you would be willing to host guests to?
+      :hosting_info,        # What are your house rules?
+      :hosting_other,       # Any other consideration that we should keep in mind?
 
-      :payment_type, # Would you like to pay now via PayPal or pledge to pay later
-      :payment_form, # Make a payment
+      :payment_type,    # Would you like to pay now via PayPal or pledge to pay later
+      :payment_form,    # Make a payment
+      # :payment_confirm, # Confirm a paypal payment
 
       :review
     ]
@@ -116,7 +118,7 @@ module RegistrationSteps
   end
 
   def registration_complete?(registration = self)
-    send("#{RegistrationSteps.all_registration_steps.last}_available?")
+    enabled_steps(registration).last == RegistrationSteps.all_registration_steps.last
   end
 
   def step_after(step, registration = self)

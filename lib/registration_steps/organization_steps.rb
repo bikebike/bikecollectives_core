@@ -4,7 +4,7 @@ module RegistrationSteps
   end
 
   def org_member_available?(registration = self)
-    registration.user.blank? || registration.user.organizations.nil? || registration.user.organizations.count < 1
+    registration.present?
   end
 
   def org_member_completed?(registration = self)
@@ -26,6 +26,14 @@ module RegistrationSteps
 
   def org_location_confirm_completed?(registration = self)
     registration.city_id.present?
+  end
+
+  def org_non_member_interest_available?(registration = self)
+    (registration.data || {})['is_org_member'] == false && !registration.potential_provider?
+  end
+
+  def org_non_member_interest_completed?(registration = self)
+    !(registration.data || {})['non_member_interest'].nil?
   end
 
   def org_select_available?(registration = self)
