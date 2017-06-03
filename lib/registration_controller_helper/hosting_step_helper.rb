@@ -72,8 +72,7 @@ module RegistrationControllerHelper
     unless params[:address].present?
       return {
         status: :error,
-        message: 'address_required',
-        data: { address: address }
+        message: 'address_required'
       }
     end
 
@@ -128,7 +127,7 @@ module RegistrationControllerHelper
 
   def hosting_space_beds_step_update(registration, params)
     bed_space = params[:bed_space].to_s
-    if bed_space.length < 1 || bed_space =~ /[^\d]/
+    if bed_space.length < 1 || bed_space =~ /[^\d]/ || bed_space.to_i < 0
       return {
         status: :error,
         message: 'bed_space_required',
@@ -158,7 +157,7 @@ module RegistrationControllerHelper
 
   def hosting_space_floor_step_update(registration, params)
     floor_space = params[:floor_space].to_s
-    if floor_space.length < 1 || floor_space =~ /[^\d]/
+    if floor_space.length < 1 || floor_space =~ /[^\d]/ || floor_space.to_i < 0
       return {
         status: :error,
         message: 'floor_space_required',
@@ -262,13 +261,13 @@ module RegistrationControllerHelper
   def hosting_end_date_step_update(registration, params)
     if params[:date].present?
       registration.housing_data['availability'] ||= [nil, nil]
-      start_date = registration.housing_data['availability'][1]
+      start_date = registration.housing_data['availability'][0]
       start_date = Date.parse(start_date) if start_date.is_a?(String)
       registration.housing_data['availability'][1] = Date.parse(params[:date])
       if start_date.present? && start_date > registration.housing_data['availability'][1]
         return {
           status: :error,
-          message: 'end_date_before_arrival',
+          message: 'end_date_before_start',
           data: { date: registration.housing_data['availability'][1] }
         }
       end

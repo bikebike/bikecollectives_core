@@ -157,32 +157,40 @@ module RegistrationControllerHelper
 
       if new_user.id.present?
         companion_registration = registration.conference.registration_for(new_user)
-
         if companion_registration.present?
-          companion_companion = (companion_registration.housing_data || {})['companion']
-          if (companion_companion && companion_companion['id'].present? && companion_companion['id'].to_i != registration.user_id) ||
-              (companion_companion && companion_companion['id'].nil? && companion_companion['email'] != registration.user.email.strip.downcase)
-
-            registration.housing_data['companion']['id'] = new_user.id
-            registration.save
-
+          if (companion_registration.housing_data || {})['companion'].present?
             return {
               status: :error,
               message: 'companion_already_has_companion',
               data: { email: email }
             }
           end
-          return {
-            status: :complete,
-            message: 'companion_registerred',
-            data: { email: email }
-          }
+
+          if companion_registration.registration_complete?
+            registration.housing_data['companion']['id'] = new_user.id
+            registration.save
+
+            return {
+              status: :complete,
+              message: 'companion_registered',
+              data: { email: email }
+            }
+          end
         end
       end
+
+      registration.housing_data['companion']['id'] = new_user.id
       registration.save
-      return { status: :complete }
+      return {
+        status: :warning,
+        message: 'companion_unregistered'
+      }
     end
-    { status: :error, message: 'companion_email_required' }
+    return {
+      status: :error,
+      message: 'companion_email_required',
+      data: { email: email }
+    }
   end
 
   def housing_bike_step(registration)

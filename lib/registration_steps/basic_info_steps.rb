@@ -16,6 +16,14 @@ module RegistrationSteps
     registration.user.present? && registration.user.languages.present?
   end
 
+  def group_ride_available?(registration = self)
+    registration.attending?
+  end
+
+  def group_ride_completed?(registration = self)
+    !(registration.data || {})['group_ride'].nil?
+  end
+
   def review_completed?(registration = self)
     false
   end

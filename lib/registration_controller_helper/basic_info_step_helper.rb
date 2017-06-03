@@ -78,7 +78,7 @@ module RegistrationControllerHelper
     return {
       type: :list,
       value: languages_step(registration)[:languages],
-      key: "languages"
+      key: 'languages'
     }
   end
 
@@ -93,6 +93,36 @@ module RegistrationControllerHelper
     end
     { status: :error, message: 'language_required' }
   end
+  
+  def group_ride_step(registration)
+    return { 
+      will_attend: (registration.data || {})['group_ride'],
+      info: registration.conference.group_ride_info
+    }
+  end
+
+  def group_ride_review_data(registration)
+    return {
+      type: :string,
+      value: group_ride_step(registration)[:will_attend],
+      key: 'forms.actions.generic'
+    }
+  end
+
+  def group_ride_step_update(registration, params)
+    case params[:button].to_s
+    when 'yes'
+      registration.data['group_ride'] = :yes
+    when 'no'
+      registration.data['group_ride'] = :no
+    when 'maybe'
+      registration.data['group_ride'] = :maybe
+    else
+      raise "Unknown button error"
+    end
+    registration.save
+    return { status: :complete }
+  end
 
   def review_step(registration)
     data = {}
@@ -102,7 +132,7 @@ module RegistrationControllerHelper
     potential_provider = registration.potential_provider?
     return {
       step_data: data,
-      is_attending: registration.attending?,
+      is_attending: registration.attending? || potential_provider,
       allow_cancel_attendance: registration.attending? && !potential_provider,
       allow_reopen_attendance: !registration.attending? && !potential_provider
     }

@@ -1,5 +1,5 @@
 class Conference < ActiveRecord::Base
-  translates :info, :title, :payment_message
+  translates :info, :title, :payment_message, :group_ride_info
 
   mount_uploader :cover, CoverUploader
   mount_uploader :poster, PosterUploader

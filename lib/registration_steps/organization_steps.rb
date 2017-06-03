@@ -38,7 +38,7 @@ module RegistrationSteps
 
   def org_select_available?(registration = self)
     org_location_available?(registration) &&
-      (registration.data || {})['is_org_member'] != false
+      (registration.data || {})['is_org_member'] != false &&
       registration.city_id.present? &&
       registration.nearby_organizations.present?
   end

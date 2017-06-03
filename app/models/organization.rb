@@ -43,13 +43,13 @@ class Organization < ActiveRecord::Base
     s = name.gsub(/[^a-z1-9]+/i, '-').chomp('-').gsub(/\-([A-Z])/, '\1')
     if Organization.find_by(:slug => s).present? && !location.nil?
       if location.city.present?
-        s += '-' + location.city
+        s += '-' + location.city.city
       end
-      if Organization.find_by(:slug => s).present? && location.territory.present?
-        s += '-' + location.territory
+      if Organization.find_by(:slug => s).present? && location.city.territory.present?
+        s += '-' + location.city.territory
       end
       if Organization.find_by(:slug => s).present?
-        s += '-' + location.country
+        s += '-' + location.city.country
       end
     end
     attempt = 1
@@ -65,7 +65,6 @@ class Organization < ActiveRecord::Base
   def in_city?(city)
     city = city.id if city.is_a?(City)
     locations.each do |location|
-      # puts " = #{name} - #{location.city} - #{location.city}:#{city} = "
       return true if location.city_id == city
     end
     return false

@@ -47,6 +47,7 @@ module RegistrationControllerHelper
       amounts: registration.conference.payment_amounts || Conference.default_payment_amounts,
       currencies: currencies,
       currency: currency.to_sym,
+      no_ajax: true
     }
   end
 
@@ -75,6 +76,7 @@ module RegistrationControllerHelper
           amount:   confirm_amount,
           currency: confirm_currency
         }.to_yaml
+      registration.save
       
       return {
           status: :paypal_confirm,
@@ -101,14 +103,28 @@ module RegistrationControllerHelper
       registration.data['payment_currency'] = currency
       token = Digest::SHA256.hexdigest(rand(Time.now.to_f * 1000000).to_i.to_s)
       registration.payment_confirmation_token = token
-      status = :paypal_redirect
-      data = {
-        request: paypal_request(registration.conference),
-        amount: value,
-        currency: currency,
-        confirm_args: { pp: :t, t: token },
-        cancel_args: { pp: :f, t: token }
-      }
+      if Rails.env.test? || Rails.env.development?
+        registration.payment_info = {
+            amount:   value,
+            currency: currency
+          }.to_yaml
+        registration.save
+        status = :paypal_confirm
+        data = {
+            confirm_amount: value,
+            confirm_currency: currency,
+            test_token: 'token'
+          }
+      else
+        status = :paypal_redirect
+        data = {
+          request: paypal_request(registration.conference),
+          amount: value,
+          currency: currency,
+          confirm_args: { pp: :t, t: token },
+          cancel_args: { pp: :f, t: token }
+        }
+      end
     end
 
     registration.data ||= {}
@@ -120,6 +136,15 @@ module RegistrationControllerHelper
 
   def paypal_payment_confirm(conference, user, params)
     registration = get_registration(conference, user)
+
+    if Rails.env.test? || Rails.env.development?
+      details = YAML.load(registration.payment_info)
+      return {
+        confirm_amount: details['amount'],
+        confirm_currency: details['currency']
+      }
+    end
+
     details = paypal_request(conference).details(params[:token])
     amount = details.amount.total
     currency = details.currency_code
@@ -152,11 +177,24 @@ module RegistrationControllerHelper
     end
     registration = get_registration(conference, user)
     info = YAML.load(get_registration(conference, user).payment_info)
-    paypal = paypal_request(conference).checkout!(info[:token], info[:payer_id], paypal_payment_response)
-    payment_info = paypal.payment_info.first
-    status = payment_info.payment_status
-    amount = payment_info.amount.total
-    currency = payment_info.currency_code
+    if Rails.env.test? || Rails.env.development?
+      status = registration.data['payment_status'] || 'Completed'
+      amount = info[:amount]
+      currency = info[:currency_code]
+    else
+      paypal = paypal_request(conference).checkout!(info[:token], info[:payer_id], paypal_payment_response)
+      payment_info = paypal.payment_info.first
+      status = payment_info.payment_status
+      amount = payment_info.amount.total
+      currency = payment_info.currency_code
+    end
+
+    if status == 'Denied'
+      return {
+        status: :error,
+        message: 'payment_denied'
+      }
+    end
 
     if status == 'Completed' || status == 'Pending'
       registration.registration_fees_paid ||= 0
@@ -171,17 +209,14 @@ module RegistrationControllerHelper
           message: 'payment_pending'
         }
       end
+
       return {
         status: :complete,
         message: 'payment_processed'
       }
     end
 
-    # xxx
-    return {
-      status: :error,
-      message: 'payment_error'
-    }
+    raise "Payment error"
   end
 
 private

@@ -72,7 +72,7 @@ module RegistrationControllerHelper
     location_name = I18n.transliterate(location.to_s).gsub(/[^\w\s]/, '').gsub(/\s\s+/, ' ').strip.downcase
     if location_name.present?
       city = City.search(params[:location])
-      if city.nil?
+      unless city.present?
         return {
             status: :error,
             message: 'city_not_found',
@@ -142,7 +142,7 @@ module RegistrationControllerHelper
       org = Organization.find(org_id)
       raise "Invalid organization" unless org.near_city?(registration.city_id)
       UserOrganizationRelationship.delete_all(user_id: registration.user_id)
-      org.add_user(registration.user_id)
+      registration.user.organizations << org
     end
 
     registration.save
@@ -218,8 +218,8 @@ module RegistrationControllerHelper
 
   def org_create_mailing_address_step(registration)
     address = (registration.data['new_org'] || {})['mailing_address']
-    if address.nil? && registration.data['new_org']['address'].present?
-      address = Location.from_city_address(registration.data['new_org']['address'], registration.city).mailing_address
+    if address.nil? && registration.data['new_org']['address'].present? && (location = Location.from_city_address(registration.data['new_org']['address'], registration.city)).present?
+      address = location.mailing_address
     end
     return { address: address }
   end

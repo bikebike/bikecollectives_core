@@ -42,7 +42,9 @@ class Location < ActiveRecord::Base
   end
 
   def self.from_city_address(address, city)
+    return nil unless city.present?
     location = Geocoder.search("#{address}, #{city.to_s}", language: 'en').first
+    return nil unless location.present? && location.data.present?
     Location.new(
         city_id: city.id,
         street: address,
@@ -53,9 +55,7 @@ class Location < ActiveRecord::Base
   end
 
   def self.search_data(data, key)
-    puts " = #{key} = "
     data['address_components'].each do |component|
-      puts " -- #{component['long_name']} -- #{component['types']} -- "
       return component['long_name'] || component['short_name'] if component['types'].include?(key.to_s)
     end
     return nil
