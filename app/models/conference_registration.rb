@@ -43,7 +43,7 @@ class ConferenceRegistration < ActiveRecord::Base
 
   def city
     @_city ||= city_id.present? ? City.find(city_id) : nil
-    return @_ciity
+    return @_city
   end
 
   def attending?
@@ -66,10 +66,8 @@ class ConferenceRegistration < ActiveRecord::Base
   def potential_provider?
     return false unless city.present? && conference.present?
     if @_potential_provider.nil?
-      Rack::MiniProfiler.step("potential_provider?") do
-        conditions = conference.provider_conditions || Conference.default_provider_conditions
-        @_potential_provider = City.distance_less_than(conference.city, city, conditions['distance']['number'], conditions['distance']['unit'])
-      end
+      conditions = conference.provider_conditions || Conference.default_provider_conditions
+      @_potential_provider = City.distance_less_than(conference.city, city, conditions['distance']['number'], conditions['distance']['unit'])
     end
     return @_potential_provider
   end
