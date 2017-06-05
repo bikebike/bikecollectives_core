@@ -18,12 +18,13 @@ module RegistrationControllerHelper
   end
 
   def payment_type_step_update(registration, params)
+    return { status: :complete } if params[:button] == 'back'
     unless ConferenceRegistration.all_payment_methods.include?(params[:button].to_sym)
       raise "Invalid payment type #{params[:button]}"
     end
     registration.data ||= {}
     registration.data['payment_method'] = params[:button].to_s
-    registration.save
+    registration.save!
     { status: :complete }
   end
   
@@ -76,7 +77,7 @@ module RegistrationControllerHelper
           amount:   confirm_amount,
           currency: confirm_currency
         }.to_yaml
-      registration.save
+      registration.save!
       
       return {
           status: :paypal_confirm,
@@ -103,12 +104,12 @@ module RegistrationControllerHelper
       registration.data['payment_currency'] = currency
       token = Digest::SHA256.hexdigest(rand(Time.now.to_f * 1000000).to_i.to_s)
       registration.payment_confirmation_token = token
-      if Rails.env.test? || Rails.env.development?
+      if Rails.env.test?
         registration.payment_info = {
             amount:   value,
             currency: currency
           }.to_yaml
-        registration.save
+        registration.save!
         status = :paypal_confirm
         data = {
             confirm_amount: value,
@@ -129,7 +130,7 @@ module RegistrationControllerHelper
 
     registration.data ||= {}
     registration.data['payment_amount'] = value
-    registration.save
+    registration.save!
 
     return { status: status, data: data }
   end
@@ -137,7 +138,7 @@ module RegistrationControllerHelper
   def paypal_payment_confirm(conference, user, params)
     registration = get_registration(conference, user)
 
-    if Rails.env.test? || Rails.env.development?
+    if Rails.env.test?
       details = YAML.load(registration.payment_info)
       return {
         confirm_amount: details['amount'],
@@ -156,7 +157,7 @@ module RegistrationControllerHelper
         currency: currency
       }.to_yaml
 
-    registration.save
+    registration.save!
 
     return {
       confirm_amount: amount,
@@ -177,7 +178,7 @@ module RegistrationControllerHelper
     end
     registration = get_registration(conference, user)
     info = YAML.load(get_registration(conference, user).payment_info)
-    if Rails.env.test? || Rails.env.development?
+    if Rails.env.test?
       status = registration.data['payment_status'] || 'Completed'
       amount = info[:amount]
       currency = info[:currency_code]
@@ -201,7 +202,7 @@ module RegistrationControllerHelper
       registration.registration_fees_paid += amount
       registration.data['current_step'] = registration.step_after(:payment_form)
 
-      registration.save
+      registration.save!
 
       if status == 'Pending'
         return {

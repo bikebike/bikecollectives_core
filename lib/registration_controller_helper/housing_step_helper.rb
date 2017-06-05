@@ -32,7 +32,7 @@ module RegistrationControllerHelper
       if registration.arrival < min_date || registration.arrival > max_date
         raise "Date #{registration.departure} must be between #{min_date} and #{max_date}"
       end
-      registration.save
+      registration.save!
       return { status: :complete }
     end
     { status: :error, message: 'arrival_date_required' }
@@ -71,7 +71,7 @@ module RegistrationControllerHelper
       if registration.departure < min_date || registration.departure > max_date
         raise "Date #{registration.departure} must be between #{min_date} and #{max_date}"
       end
-      registration.save
+      registration.save!
       return { status: :complete }
     end
     { status: :error, message: 'departure_date_required' }
@@ -81,7 +81,7 @@ module RegistrationControllerHelper
     return {
       housing: registration.housing.present? ? registration.housing.to_sym : nil,
       city: registration.conference.city,
-      housing_types: ConferenceRegistration.all_housing_options
+      housing_types: ConferenceRegistration.all_housing_options.reverse
     }
   end
 
@@ -96,11 +96,12 @@ module RegistrationControllerHelper
   end
 
   def housing_type_step_update(registration, params)
+    return { status: :complete } if params[:button] == 'back'
     unless ConferenceRegistration.all_housing_options.include?(params[:button].to_sym)
       raise "Invalid housing type '#{params[:button]}'"
     end
     registration.housing = params[:button].to_s
-    registration.save
+    registration.save!
     { status: :complete }
   end
 
@@ -124,7 +125,7 @@ module RegistrationControllerHelper
     when 'no'
       registration.housing_data['companion'] = false
     end
-    registration.save unless registration.housing_data['companion'].nil?
+    registration.save! unless registration.housing_data['companion'].nil?
     { status: :complete }
   end
 
@@ -168,7 +169,7 @@ module RegistrationControllerHelper
 
           if companion_registration.registration_complete?
             registration.housing_data['companion']['id'] = new_user.id
-            registration.save
+            registration.save!
 
             return {
               status: :complete,
@@ -180,7 +181,7 @@ module RegistrationControllerHelper
       end
 
       registration.housing_data['companion']['id'] = new_user.id
-      registration.save
+      registration.save!
       return {
         status: :warning,
         message: 'companion_unregistered'
@@ -211,11 +212,12 @@ module RegistrationControllerHelper
   end
 
   def housing_bike_step_update(registration, params)
+    return { status: :complete } if params[:button] == 'back'
     unless ConferenceRegistration.all_bike_options.include?(params[:button].to_sym)
       raise "Invalid bike option: #{params[:bike]}"
     end
     registration.bike = params[:button].to_s
-    registration.save
+    registration.save!
     { status: :complete }
   end
 
@@ -237,11 +239,12 @@ module RegistrationControllerHelper
   end
 
   def housing_food_step_update(registration, params)
+    return { status: :complete } if params[:button] == 'back'
     unless ConferenceRegistration.all_food_options.include?(params[:button].to_sym)
       raise "Invalid food option #{params[:button]}"
     end
     registration.food = params[:button].to_s
-    registration.save
+    registration.save!
     { status: :complete }
   end
 
@@ -259,7 +262,7 @@ module RegistrationControllerHelper
   def housing_other_step_update(registration, params)
     registration.housing_data ||= {}
     registration.housing_data['other'] = params[:other] || ''
-    registration.save
+    registration.save!
     { status: :complete }
   end
 

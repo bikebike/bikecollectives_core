@@ -19,10 +19,12 @@ module RegistrationControllerHelper
       registration.data['is_org_member'] = true
     when 'no'
       registration.data['is_org_member'] = false
+    when 'back'
+      # do nothing
     else
       raise "Unknown button error"
     end
-    registration.save
+    registration.save!
     { status: :complete }
   end
 
@@ -93,7 +95,7 @@ module RegistrationControllerHelper
         registration.data['city_id'] = city.id
       end
 
-      registration.save
+      registration.save!
       return { status: :complete }
     end
 
@@ -112,7 +114,7 @@ module RegistrationControllerHelper
     if params[:button].to_s == 'yes'
       registration.data ||= {}
       registration.city_id = registration.data['city_id']
-      registration.save
+      registration.save!
     end
     { status: :complete }
   end
@@ -145,7 +147,7 @@ module RegistrationControllerHelper
       registration.user.organizations << org
     end
 
-    registration.save
+    registration.save!
 
     return { status: :complete }
   end
@@ -162,7 +164,7 @@ module RegistrationControllerHelper
     if params[:name].to_s.strip.present?
       registration.data['new_org'] ||= {}
       registration.data['new_org']['name'] = params[:name].strip
-      registration.save
+      registration.save!
       return { status: :complete }
     end
     return {
@@ -186,7 +188,7 @@ module RegistrationControllerHelper
     if params[:address].to_s.strip.present?
       registration.data['new_org'] ||= {}
       registration.data['new_org']['address'] = params[:address].strip
-      registration.save
+      registration.save!
       return { status: :complete }
     end
     return {
@@ -210,7 +212,7 @@ module RegistrationControllerHelper
       end
       registration.data['new_org'] ||= {}
       registration.data['new_org']['email'] = params[:email].strip
-      registration.save
+      registration.save!
       return { status: :complete }
     end
     { status: :error, message: 'email_required' }
@@ -258,7 +260,7 @@ module RegistrationControllerHelper
 
       registration.data['new_org']['id'] = org.id
 
-      registration.save
+      registration.save!
       return { status: :complete }
     end
     { status: :error, message: 'mailing_address_required' }

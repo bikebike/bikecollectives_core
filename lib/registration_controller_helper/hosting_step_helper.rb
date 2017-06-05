@@ -23,7 +23,7 @@ module RegistrationControllerHelper
       registration.can_provide_housing = false
     end
 
-    registration.save unless registration.can_provide_housing.nil?
+    registration.save! unless registration.can_provide_housing.nil?
 
     return { status: :complete }
   end
@@ -49,7 +49,7 @@ module RegistrationControllerHelper
       registration.is_attending = 'n'
     end
 
-    registration.save unless registration.is_attending.nil?
+    registration.save! unless registration.is_attending.nil?
 
     return { status: :complete }
   end
@@ -78,7 +78,7 @@ module RegistrationControllerHelper
 
     registration.housing_data ||= {}
     registration.housing_data['address'] = params[:address]
-    registration.save
+    registration.save!
 
     return { status: :complete }
   end
@@ -107,7 +107,7 @@ module RegistrationControllerHelper
     end
 
     registration.housing_data['phone'] = phone
-    registration.save
+    registration.save!
 
     return { status: :complete }
   end
@@ -137,7 +137,7 @@ module RegistrationControllerHelper
 
     registration.housing_data['space'] ||= {}
     registration.housing_data['space']['bed_space'] = bed_space.to_i
-    registration.save
+    registration.save!
 
     return { status: :complete }
   end
@@ -167,7 +167,7 @@ module RegistrationControllerHelper
 
     registration.housing_data['space'] ||= {}
     registration.housing_data['space']['floor_space'] = floor_space.to_i
-    registration.save
+    registration.save!
 
     return { status: :complete }
   end
@@ -195,7 +195,7 @@ module RegistrationControllerHelper
       registration.housing_data['space']['tent_space'] = 0
     end
 
-    registration.save
+    registration.save!
 
     return { status: :complete }
   end
@@ -235,7 +235,7 @@ module RegistrationControllerHelper
       if registration.housing_data['availability'][0] < min_date || registration.housing_data['availability'][0] > max_date
         raise "Date #{registration.housing_data['availability'][1]} must be between #{min_date} and #{max_date}"
       end
-      registration.save
+      registration.save!
       return { status: :complete }
     end
     { status: :error, message: 'start_date_required' }
@@ -276,7 +276,7 @@ module RegistrationControllerHelper
       if registration.housing_data['availability'][1] < min_date || registration.housing_data['availability'][1] > max_date
         raise "Date #{registration.housing_data['availability'][1]} must be between #{min_date} and #{max_date}"
       end
-      registration.save
+      registration.save!
       return { status: :complete }
     end
     { status: :error, message: 'end_date_required' }
@@ -306,7 +306,7 @@ module RegistrationControllerHelper
 
     registration.housing_data ||= {}
     registration.housing_data['info'] = params[:info]
-    registration.save
+    registration.save!
 
     return { status: :complete }
   end

@@ -29,7 +29,7 @@ module RegistrationControllerHelper
         end
       end
 
-      registration.save
+      registration.save!
 
       return { status: :complete }
     end
@@ -117,10 +117,12 @@ module RegistrationControllerHelper
       registration.data['group_ride'] = :no
     when 'maybe'
       registration.data['group_ride'] = :maybe
+    when 'back'
+      # do nothing
     else
       raise "Unknown button error"
     end
-    registration.save
+    registration.save!
     return { status: :complete }
   end
 
@@ -151,7 +153,7 @@ module RegistrationControllerHelper
     elsif params[:button].to_s == 'reopen_registration'
       registration.is_attending = 'y'
     end
-    registration.save
+    registration.save!
     return { status: :complete }
   end
 end

@@ -38,14 +38,15 @@ module RegistrationControllerHelper
   end
 
   def update_registration_step!(step, conference, user, params, &block)
-    registration = get_registration(conference, user)
     result = begin
                yield
              rescue Exception => e
                logger.info e
                generic_registration_error e
+               raise e if Rails.env.development?
              end
 
+    registration = get_registration!(conference, user)
     registration.data ||= {}
 
     button = (params[:button] || '').to_sym
@@ -90,5 +91,11 @@ private
     @_registration["#{conference.id}:#{user.id}"] ||= 
       ConferenceRegistration.find_by(user_id: user.id, conference_id: conference.id) ||
         ConferenceRegistration.new(user_id: user.id, conference_id: conference.id)
+  end
+
+  def get_registration!(conference, user)
+    @_registration ||= {}
+    @_registration["#{conference.id}:#{user.id}"] = nil
+    get_registration(conference, user)
   end
 end
