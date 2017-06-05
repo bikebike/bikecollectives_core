@@ -69,7 +69,7 @@ module RegistrationControllerHelper
   end
   
   def languages_step(registration)
-    return { 
+    return {
       languages: (registration.user.languages || [I18n.locale]).map(&:to_sym)
     }
   end

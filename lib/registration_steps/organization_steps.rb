@@ -40,7 +40,7 @@ module RegistrationSteps
     org_location_available?(registration) &&
       (registration.data || {})['is_org_member'] != false &&
       registration.city_id.present? &&
-      registration.nearby_organizations.present?
+      registration.has_nearby_organizations?
   end
 
   def org_select_completed?(registration = self)
@@ -54,7 +54,7 @@ module RegistrationSteps
     (registration.data || {})['is_org_member'] != false &&
       (
         (registration.data || {})['new_org'] ||
-        (registration.city_id.present? && registration.nearby_organizations.empty?)
+        (registration.city_id.present? && !registration.has_nearby_organizations?)
       )
   end
 

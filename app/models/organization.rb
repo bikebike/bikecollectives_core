@@ -76,6 +76,13 @@ class Organization < ActiveRecord::Base
       })
   end
 
+  def self.first_near(city, radius = 100, unit = :km)
+    Organization.find_each do |org|
+      return true if org.near_city?(city)
+    end
+    return false
+  end
+
   def self.near(city, radius = 100, unit = :km)
     in_city_orgs = []
     near_city_orgs = []

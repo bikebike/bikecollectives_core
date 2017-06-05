@@ -42,7 +42,8 @@ class ConferenceRegistration < ActiveRecord::Base
   end
 
   def city
-    city_id.present? ? City.find(city_id) : nil
+    @_city ||= city_id.present? ? City.find(city_id) : nil
+    return @_ciity
   end
 
   def attending?
@@ -62,32 +63,28 @@ class ConferenceRegistration < ActiveRecord::Base
     return :registered
   end
 
-  # around_update :check_status
-
-  # def check_status
-  #   yield
-    
-  #   old_status = status(true)
-  #   new_status = status
-
-  #   if old_status.present? && old_status != new_status
-  #     if (conference.registration_status == :pre && new_status == :preregistered) ||
-  #       (conference.registration_status == :open && new_status == :registered)
-
-  #       UserMailer.send_mail(self)
-  #     end
-  #   end
-  # end
-
   def potential_provider?
     return false unless city.present? && conference.present?
-    conditions = conference.provider_conditions || Conference.default_provider_conditions
-    return City.distance_less_than(conference.city, city, conditions['distance']['number'], conditions['distance']['unit'])
+    if @_potential_provider.nil?
+      Rack::MiniProfiler.step("potential_provider?") do
+        conditions = conference.provider_conditions || Conference.default_provider_conditions
+        @_potential_provider = City.distance_less_than(conference.city, city, conditions['distance']['number'], conditions['distance']['unit'])
+      end
+    end
+    return @_potential_provider
   end
 
   def nearby_organizations
     return nil if city_id.nil?
     Organization.near(city_id).sort { |o1, o2| o1.name.downcase <=> o2.name.downcase }
+  end
+
+  def has_nearby_organizations?
+    if @_has_nearby_organizations.nil?
+      @_has_nearby_organizations = Organization.find_by_city(city_id).present? ||
+                                   Organization.first_near(city_id).present?
+    end
+    return @_has_nearby_organizations
   end
 
 private
