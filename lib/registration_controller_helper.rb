@@ -38,13 +38,13 @@ module RegistrationControllerHelper
   end
 
   def update_registration_step!(step, conference, user, params, &block)
-    result = begin
-               yield
-             rescue Exception => e
-               logger.info e
-               generic_registration_error e
-               raise e if Rails.env.development?
-             end
+    begin
+      result = yield
+    rescue Exception => e
+      logger.info e
+      result = generic_registration_error e
+      raise e if Rails.env.development?
+    end
 
     registration = get_registration!(conference, user)
     registration.data ||= {}
