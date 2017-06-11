@@ -27,18 +27,29 @@ module RegistrationControllerHelper
     registration.save!
     { status: :complete }
   end
-  
-  def payment_form_step(registration)
+
+  def default_currency(registration)
     payment_method = registration.data['payment_method'].to_sym
     
     if payment_method == :paypal
       currency = registration.data['payment_currency']
-      currencies = Conference.default_currencies
       unless currency.present?
         currency = registration.city.country == 'CA' ? :CAD : :USD
       end      
     else
       currency = registration.conference.city.country == 'CA' ? :CAD : :USD
+    end
+
+    return currency
+  end
+  
+  def payment_form_step(registration)
+    payment_method = registration.data['payment_method'].to_sym
+    currency = default_currency(registration).to_sym
+
+    if payment_method == :paypal
+      currencies = Conference.default_currencies
+    else
       currencies = [currency]
     end
 
@@ -47,7 +58,7 @@ module RegistrationControllerHelper
       amount: registration.data['payment_amount'],
       amounts: registration.conference.payment_amounts || Conference.default_payment_amounts,
       currencies: currencies,
-      currency: currency.to_sym,
+      currency: currency,
       no_ajax: true
     }
   end
@@ -67,6 +78,7 @@ module RegistrationControllerHelper
       return { status: :complete }
     end
 
+    value = nil
     if params[:token]
       details = paypal_request.details(params[:token])
       confirm_amount = details.amount.total
@@ -98,38 +110,44 @@ module RegistrationControllerHelper
 
     status = :complete
     data = nil
+    
+    registration.data ||= {}
 
     if registration.data['payment_method'].to_sym == :paypal
-      currency = params[:currency]
-      registration.data['payment_currency'] = currency
-      token = Digest::SHA256.hexdigest(rand(Time.now.to_f * 1000000).to_i.to_s)
-      registration.payment_confirmation_token = token
-      if Rails.env.test?
-        registration.payment_info = {
-            amount:   value,
-            currency: currency
-          }.to_yaml
-        registration.save!
-        status = :paypal_confirm
-        data = {
-            confirm_amount: value,
-            confirm_currency: currency,
-            test_token: 'token'
-          }
+      if params[:currency].present?
+        registration.data['payment_currency'] = params[:currency]
+        data = { currency: params[:currency].to_sym }
+        status = :incomplete
       else
-        status = :paypal_redirect
-        data = {
-          request: paypal_request(registration.conference),
-          amount: value,
-          currency: currency,
-          confirm_args: { pp: :t, t: token },
-          cancel_args: { pp: :f, t: token }
-        }
+        token = Digest::SHA256.hexdigest(rand(Time.now.to_f * 1000000).to_i.to_s)
+        registration.payment_confirmation_token = token
+        currency = default_currency(registration).to_sym
+        if Rails.env.test?
+          registration.payment_info = {
+              amount:   value,
+              currency: currency
+            }.to_yaml
+          registration.save!
+          status = :paypal_confirm
+          data = {
+              confirm_amount: value,
+              confirm_currency: currency,
+              test_token: 'token'
+            }
+        else
+          status = :paypal_redirect
+          data = {
+            request: paypal_request(registration.conference),
+            amount: value,
+            currency: currency,
+            confirm_args: { pp: :t, t: token },
+            cancel_args: { pp: :f, t: token }
+          }
+        end
       end
     end
 
-    registration.data ||= {}
-    registration.data['payment_amount'] = value
+    registration.data['payment_amount'] = value if value.present?
     registration.save!
 
     return { status: status, data: data }

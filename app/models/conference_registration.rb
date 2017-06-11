@@ -85,6 +85,13 @@ class ConferenceRegistration < ActiveRecord::Base
     return @_has_nearby_organizations
   end
 
+  def from
+    if user.organizations.present?
+      return I18n.backend._!("#{user.organizations.first.name} (#{city.city})")
+    end
+    return city.to_s
+  end
+
 private
   def check(field, was)
     send("#{field}#{was ? '_was' : ''}")

@@ -132,11 +132,14 @@ module RegistrationControllerHelper
       data[step] = send("#{step}_review_data", registration)
     end
     potential_provider = registration.potential_provider?
+    all_workshops = Workshop.where(conference_id: registration.conference.id)
     return {
       step_data: data,
       is_attending: registration.attending? || potential_provider,
       allow_cancel_attendance: registration.attending? && !potential_provider,
-      allow_reopen_attendance: !registration.attending? && !potential_provider
+      allow_reopen_attendance: !registration.attending? && !potential_provider,
+      my_workshops: all_workshops.select { |w| w.active_facilitator?(current_user) },
+      interested_workshops: all_workshops.select { |w| w.interested?(current_user) }
     }
   end
 
