@@ -326,6 +326,7 @@ module RegistrationControllerHelper
 
   def hosting_other_step_update(registration, params)
     registration.housing_data['notes'] = params[:other]
+    registration.save!
     return { status: :complete }
   end
 end

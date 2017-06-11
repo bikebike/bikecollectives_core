@@ -43,6 +43,7 @@ module RegistrationControllerHelper
 
   def org_non_member_interest_step_update(registration, params)
     registration.data['non_member_interest'] = params[:interest]
+    registration.save!
     return {
       status: :complete
     }

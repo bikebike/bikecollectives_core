@@ -1,5 +1,5 @@
 class Conference < ActiveRecord::Base
-  translates :info, :title, :payment_message, :group_ride_info
+  translates :info, :title, :payment_message, :group_ride_info, :housing_info, :workshop_info, :schedule_info, :travel_info, :city_info, :what_to_bring, :volunteering_info, :additional_details
 
   mount_uploader :cover, CoverUploader
   mount_uploader :poster, PosterUploader
@@ -173,6 +173,42 @@ class Conference < ActiveRecord::Base
 
   def self.default_provider_conditions
     { 'distance' => { 'number' => 0, 'unit' => 'mi' }}
+  end
+
+  def copy_data
+    {
+      workshop_info: { show: workshop_info.present?, value: workshop_info, heading: 'articles.conferences.headings.workshop_info' },
+      housing_info: { show: housing_info.present?, value: housing_info, heading: 'articles.conferences.headings.housing_info' },
+      group_ride_info: { show: group_ride_info.present?, value: group_ride_info, heading: 'articles.conferences.headings.group_ride_info' },
+      payment_message: { show: payment_message.present?, value: payment_message, heading: 'articles.conferences.headings.payment_message' },
+      schedule_info: { show: schedule_info.present?, value: schedule_info, heading: 'articles.conferences.headings.schedule_info' },
+      travel_info: { show: travel_info.present?, value: travel_info, heading: 'articles.conferences.headings.travel_info', vars: { city: city.city } },
+      city_info: { show: city_info.present?, value: city_info, heading: 'articles.conferences.headings.city_info', vars: { city: city.city } },
+      what_to_bring: { show: what_to_bring.present?, value: what_to_bring, heading: 'articles.conferences.headings.what_to_bring' },
+      volunteering_info: { show: volunteering_info.present?, value: volunteering_info, heading: 'articles.conferences.headings.volunteering_info' },
+      additional_details: { show: additional_details.present?, value: additional_details, heading: false }
+    }
+  end
+
+  def front_page_details
+    [
+      :payment_message
+    ]
+  end
+
+  def extended_details
+    [
+      :payment_message,
+      :housing_info,
+      :workshop_info,
+      :schedule_info,
+      :group_ride_info,
+      :city_info,
+      :travel_info,
+      :what_to_bring,
+      :volunteering_info,
+      :additional_details
+    ]
   end
 
 end
