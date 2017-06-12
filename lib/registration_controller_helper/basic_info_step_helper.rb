@@ -19,7 +19,7 @@ module RegistrationControllerHelper
         # in this step, we'll try to guess a few tings about their registration using the data from the last time they registerred
         if last_registration_data.present?
           # we used to save language data directly to the registration object, if we have it here, save it to the user instance
-          if last_registration_data['languages'].present? && user.languages.blank?
+          if last_registration_data['languages'].present? && registration.user.languages.blank?
             registration.user.languages = JSON.parse(last_registration_data['languages'])
             registration.user.save!
           end

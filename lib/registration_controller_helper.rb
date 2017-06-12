@@ -42,6 +42,7 @@ module RegistrationControllerHelper
       result = yield
     rescue Exception => e
       logger.info e
+      logger.info exception.backtrace.join("\n")
       result = generic_registration_error e
       raise e if Rails.env.development?
     end

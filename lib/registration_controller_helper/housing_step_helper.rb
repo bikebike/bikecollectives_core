@@ -212,7 +212,7 @@ module RegistrationControllerHelper
   end
 
   def housing_bike_step_update(registration, params)
-    return { status: :complete } if params[:button] == 'back'
+    return { status: :complete } if params[:button] == 'back' || params[:button] == 'review'
     unless ConferenceRegistration.all_bike_options.include?(params[:button].to_sym)
       raise "Invalid bike option: #{params[:bike]}"
     end
@@ -239,7 +239,7 @@ module RegistrationControllerHelper
   end
 
   def housing_food_step_update(registration, params)
-    return { status: :complete } if params[:button] == 'back'
+    return { status: :complete } if params[:button] == 'back' || params[:button] == 'review'
     unless ConferenceRegistration.all_food_options.include?(params[:button].to_sym)
       raise "Invalid food option #{params[:button]}"
     end
