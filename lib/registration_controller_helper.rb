@@ -41,10 +41,7 @@ module RegistrationControllerHelper
     begin
       result = yield
     rescue Exception => e
-      logger.info e
-      logger.info exception.backtrace.join("\n")
       result = generic_registration_error e
-      raise e if Rails.env.development?
     end
 
     registration = get_registration!(conference, user)
@@ -72,6 +69,11 @@ module RegistrationControllerHelper
       end
 
       registration.data['current_step'] = registration.step_after(step)
+
+      if registration.data['current_step'] == :review
+        result[:message] ||= 'registration_complete'
+      end
+
       registration.save
     when :goto
       registration.data['current_step'] = result[:step]

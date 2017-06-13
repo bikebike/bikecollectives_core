@@ -44,13 +44,18 @@ module RegistrationControllerHelper
   end
   
   def name_step(registration)
-    { name: registration.user.firstname || registration.user.username }
+    return {
+      name: registration.user.firstname || registration.user.username,
+      pronoun: registration.user.pronoun
+    }
   end
 
   def name_review_data(registration)
+    data = name_step(registration)
     return {
       type: :string,
-      value: name_step(registration)[:name]
+      value: data[:name],
+      supplementary: data[:pronoun]
     }
   end
 
@@ -58,6 +63,8 @@ module RegistrationControllerHelper
     name = params[:name].to_s.squish
     if name.present?
       registration.user.firstname = name
+      pronoun = params[:pronoun].to_s.squish
+      registration.user.pronoun = pronoun.blank? ? nil : pronoun
       registration.user.save
       return { status: :complete }
     end

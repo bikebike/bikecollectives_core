@@ -21,11 +21,7 @@ module RegistrationControllerHelper
     if params[:date].present?
       registration.arrival = Date.parse(params[:date])
       if registration.departure.present? && registration.arrival > registration.departure
-        return {
-          status: :error,
-          message: 'departure_date_before_arrival',
-          data: { date: registration.arrival }
-        }
+        registration.departure = registration.arrival
       end
       min_date = registration.conference.min_arrival_date
       max_date = registration.conference.max_departure_date
