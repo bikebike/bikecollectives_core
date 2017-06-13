@@ -22,7 +22,7 @@ class ChangeDataToJsonForConferenceRegistration < ActiveRecord::Migration
         begin
           registration.data = data[registration.id].to_json
           registration.save
-        rescue
+        rescue Exception => e
           puts "Eror saving data as JSON #{data[registration.id]}"
         end
       end
