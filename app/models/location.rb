@@ -26,7 +26,8 @@ class Location < ActiveRecord::Base
   end
 
   def translate_territory
-    I18n.t("geography.subregions.#{country}.#{territory}")
+    # territories aren't always available so return NIL if we don't have a translation
+    I18n.t("geography.subregions.#{country}.#{territory}", resolve: false)
   end
 
   def translate_country
@@ -36,7 +37,7 @@ class Location < ActiveRecord::Base
   def mailing_address
     [
       street,
-      "#{city.city}, #{translate_territory}",
+      "#{city.city}, #{translate_territory || territory}",
       "#{translate_country} #{postal_code}"
     ].join("\n")
   end

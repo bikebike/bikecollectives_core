@@ -41,10 +41,6 @@ class Conference < ActiveRecord::Base
       conference_administrators.each do |u|
         return true if user.id == u.id
       end
-      
-      organizations.each do |o|
-        return true if o.host?(user)
-      end
     end
     return false
   end
@@ -64,7 +60,8 @@ class Conference < ActiveRecord::Base
   end
 
   def registered?(user)
-    registration = ConferenceRegistration.find_by(:user_id => user.id, :conference_id => id)
+    return false if user.nil?
+    registration = ConferenceRegistration.find_by(user_id: user.id, conference_id: id)
     return registration ? registration.is_attending : false
   end
 
@@ -186,13 +183,14 @@ class Conference < ActiveRecord::Base
       city_info: { show: city_info.present?, value: city_info, heading: 'articles.conferences.headings.city_info', vars: { city: city.city } },
       what_to_bring: { show: what_to_bring.present?, value: what_to_bring, heading: 'articles.conferences.headings.what_to_bring' },
       volunteering_info: { show: volunteering_info.present?, value: volunteering_info, heading: 'articles.conferences.headings.volunteering_info' },
-      additional_details: { show: additional_details.present?, value: additional_details, heading: false }
+      additional_details: { show: additional_details.present?, value: additional_details, heading: false },
+      workshops: { show: false }
     }
   end
 
   def front_page_details
     [
-      :payment_message
+      :workshops
     ]
   end
 
@@ -207,7 +205,8 @@ class Conference < ActiveRecord::Base
       :travel_info,
       :what_to_bring,
       :volunteering_info,
-      :additional_details
+      :additional_details,
+      :workshops
     ]
   end
 

@@ -51,7 +51,8 @@ class City < ActiveRecord::Base
   end
 
   def translate_territory
-    I18n.t("geography.subregions.#{country}.#{territory}")
+    # territories aren't always available so return NIL if we don't have a translation
+    I18n.t("geography.subregions.#{country}.#{territory}", resolve: false)
   end
 
   def translate_country

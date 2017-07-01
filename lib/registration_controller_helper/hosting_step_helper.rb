@@ -3,8 +3,8 @@ module RegistrationControllerHelper
     return {
       can_provide_housing: registration.can_provide_housing,
       city: registration.conference.city,
-      max_date: registration.conference.min_arrival_date.to_date,
-      min_date: registration.conference.max_departure_date.to_date
+      min_date: registration.conference.min_arrival_date.to_date,
+      max_date: registration.conference.max_departure_date.to_date
     }
   end
 
