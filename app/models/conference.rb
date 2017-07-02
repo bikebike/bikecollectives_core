@@ -39,7 +39,7 @@ class Conference < ActiveRecord::Base
       return true if user.administrator?
       
       conference_administrators.each do |u|
-        return true if user.id == u.id
+        return true if user.id == u.user_id
       end
     end
     return false
