@@ -195,8 +195,8 @@ module RegistrationControllerHelper
         message: 'payment_cancelled'
       }
     end
-    registration.data ||= {}
     registration = get_registration(conference, user)
+    registration.data ||= {}
     info = YAML.load(get_registration(conference, user).payment_info)
     if Rails.env.test?
       status = registration.data['payment_status'] || 'Completed'
