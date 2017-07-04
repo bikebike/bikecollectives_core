@@ -27,6 +27,7 @@ class UserController < ApplicationController
 
   def login_user(u)
     auto_login(u)
+    remember_me!
   end
 
   def user_settings
@@ -92,6 +93,7 @@ class UserController < ApplicationController
     if user.present? && user.email.present?
       # log in the user
       auto_login(user)
+      remember_me!
     end
 
     oauth_last_url = (session[:oauth_last_url] || home_path(trailing_slash: true))
@@ -125,6 +127,7 @@ class UserController < ApplicationController
 
     # log in
     auto_login(user)
+    remember_me!
 
     # clear out the session
     oauth_last_url = (session[:oauth_last_url] || home_path(trailing_slash: true))
