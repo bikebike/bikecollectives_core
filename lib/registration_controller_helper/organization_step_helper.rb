@@ -130,9 +130,10 @@ module RegistrationControllerHelper
   end
 
   def org_select_review_data(registration)
+    org = registration.user.organizations.first
     return {
       type: :string,
-      value: registration.user.organizations.first.name
+      value: org.present? ? org.name : nil
     }
   end
 

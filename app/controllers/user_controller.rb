@@ -30,10 +30,10 @@ class UserController < ApplicationController
   end
 
   def user_settings
-    @conferences = Array.new
+    @my_conferences = Array.new
     if logged_in?
       Conference.all.each do |conference|
-        @conferences << conference if conference.host? current_user
+        @my_conferences << conference if conference.host? current_user
       end
     end
     @main_title = @page_title = 'page_titles.user_settings.Your_Account'

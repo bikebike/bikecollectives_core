@@ -3,7 +3,7 @@ require 'rest_client'
 module RegistrationControllerHelper
   def payment_type_step(registration)
     return {
-      payment_method: registration.data['payment_method'],
+      payment_method: (registration.data || {})['payment_method'],
       payment_methods: ConferenceRegistration.all_payment_methods
     }
   end
@@ -29,10 +29,10 @@ module RegistrationControllerHelper
   end
 
   def default_currency(registration)
-    payment_method = registration.data['payment_method'].to_sym
+    payment_method = (registration.data || {})['payment_method'].present? ? registration.data['payment_method'].to_sym : nil
     
     if payment_method == :paypal
-      currency = registration.data['payment_currency']
+      currency = (registration.data || {})['payment_currency']
       unless currency.present?
         currency = registration.city.country == 'CA' ? :CAD : :USD
       end      
@@ -44,7 +44,7 @@ module RegistrationControllerHelper
   end
   
   def payment_form_step(registration)
-    payment_method = registration.data['payment_method'].to_sym
+    payment_method = (registration.data || {})['payment_method'].present? ? registration.data['payment_method'].to_sym : nil
     currency = default_currency(registration).to_sym
 
     if payment_method == :paypal
@@ -55,7 +55,7 @@ module RegistrationControllerHelper
 
     return {
       method: payment_method,
-      amount: registration.data['payment_amount'],
+      amount: (registration.data || {})['payment_amount'],
       amounts: registration.conference.payment_amounts || Conference.default_payment_amounts,
       currencies: currencies,
       currency: currency,
@@ -113,7 +113,8 @@ module RegistrationControllerHelper
     
     registration.data ||= {}
 
-    if registration.data['payment_method'].to_sym == :paypal
+    payment_method = registration.data['payment_method'].present? ? registration.data['payment_method'].to_sym : nil
+    if payment_method == :paypal
       if params[:currency].present?
         registration.data['payment_currency'] = params[:currency]
         data = { currency: params[:currency].to_sym }
@@ -194,6 +195,7 @@ module RegistrationControllerHelper
         message: 'payment_cancelled'
       }
     end
+    registration.data ||= {}
     registration = get_registration(conference, user)
     info = YAML.load(get_registration(conference, user).payment_info)
     if Rails.env.test?

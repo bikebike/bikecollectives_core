@@ -55,7 +55,11 @@ module RegistrationControllerHelper
     return {
       type: :string,
       value: data[:name],
-      supplementary: data[:pronoun]
+      supplementary: data[:pronoun],
+      table_data: {
+        name: { type: :string, value: data[:name] },
+        pronoun: { type: :string, value: data[:pronoun] }
+      }
     }
   end
 
@@ -82,10 +86,28 @@ module RegistrationControllerHelper
   end
 
   def languages_review_data(registration)
+    languages = languages_step(registration)[:languages]
+    table_data = {
+      preferred_language: {
+        value: registration.user.locale,
+        key: 'articles.conference_registration.terms.Preferred_Languages',
+        type: :list,
+        options: User.AVAILABLE_LANGUAGES,
+        options_key: 'languages'
+      }
+    }
+    User.AVAILABLE_LANGUAGES.each do |l|
+      table_data["language_#{l}".to_sym] = {
+        type: :bool,
+        key: "languages.#{l}",
+        value: (registration.user.languages || []).include?(l.to_s)
+      }
+    end
     return {
       type: :list,
-      value: languages_step(registration)[:languages],
-      key: 'languages'
+      value: languages,
+      key: 'languages',
+      table_data: table_data
     }
   end
 

@@ -83,6 +83,52 @@ module RegistrationControllerHelper
     return result
   end
 
+  def tabular_data(conference)
+    registrations = ConferenceRegistration.where(conference_id: conference.id).sort do |a, b|
+      (a.user.present? ? (a.user.firstname || '') : '').downcase <=> (b.user.present? ? (b.user.firstname || '') : '').downcase
+    end
+    boolean_options = [
+              [I18n.t("articles.conference_registration.questions.bike.yes"), true],
+              [I18n.t("articles.conference_registration.questions.bike.no"), false]
+            ]
+
+    columns = Set.new [:name, :email, :status, :date]
+     column_types = {}
+    keys = {}
+    rows = []
+    column_options = {}
+    registrations.each do |r|
+      row = {
+        id: r.id,
+        email: r.user.email,
+        status: I18n.t("articles.conference_registration.terms.registration_status.#{r.status}"),
+        date: r.created_at ? r.created_at.strftime("%F %T") : '' 
+      }
+      RegistrationSteps.all_registration_steps.each do |step|
+        review_data = respond_to?("#{step}_review_data") ? send("#{step}_review_data", r) : {}
+        (review_data[:table_data] || {}).each do |column_name, column_data|
+          columns << column_name
+          column_types[column_name] ||= column_data[:type]
+          keys[column_name] ||= column_data[:key] if column_data[:key].present?
+          if column_data[:type] == :list
+            column_options[column_name] ||= column_data[:options].map { |o| [I18n.t("articles.conference_registration.questions.bike.#{o}", o)] }
+          elsif column_data[:type] == :bool
+            column_options[column_name] ||= boolean_options
+          end
+          row[column_name] = column_data[:value]
+        end
+      end
+      rows << row
+    end
+    return {
+      registrations: registrations,
+      columns: columns,
+      column_types: column_types,
+      keys: keys,
+      data: rows
+    }
+  end
+
 private
 
   def generic_registration_error(exception = nil)

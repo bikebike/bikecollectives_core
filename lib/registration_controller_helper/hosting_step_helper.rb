@@ -92,7 +92,7 @@ module RegistrationControllerHelper
   def hosting_phone_review_data(registration)
     return {
       type: :string,
-      value: registration.housing_data['phone']
+      value: (registration.housing_data || {})['phone']
     }
   end
 
@@ -106,6 +106,7 @@ module RegistrationControllerHelper
       }
     end
 
+    registration.housing_data ||= {}
     registration.housing_data['phone'] = phone
     registration.save!
 
@@ -135,6 +136,7 @@ module RegistrationControllerHelper
       }
     end
 
+    registration.housing_data ||= {}
     registration.housing_data['space'] ||= {}
     registration.housing_data['space']['bed_space'] = bed_space.to_i
     registration.save!
@@ -165,6 +167,7 @@ module RegistrationControllerHelper
       }
     end
 
+    registration.housing_data ||= {}
     registration.housing_data['space'] ||= {}
     registration.housing_data['space']['floor_space'] = floor_space.to_i
     registration.save!
@@ -175,7 +178,7 @@ module RegistrationControllerHelper
   def hosting_space_tent_step(registration)
     tent_space = ((registration.housing_data || {})['space'] || {})['tent_space']
     return {
-      tent_space: tent_space.present? && tent_space > 0
+      tent_space: tent_space.present? && tent_space.to_i > 0
     }
   end
 
@@ -190,8 +193,12 @@ module RegistrationControllerHelper
     case params[:button].to_s
     when 'yes'
       # we're going to hard code this as 5 for now until we have time to implement more complex logic
+      registration.housing_data ||= {}
+      registration.housing_data['space'] ||= {}
       registration.housing_data['space']['tent_space'] = 5
     when 'no'
+      registration.housing_data ||= {}
+      registration.housing_data['space'] ||= {}
       registration.housing_data['space']['tent_space'] = 0
     end
 
@@ -202,7 +209,7 @@ module RegistrationControllerHelper
 
   def hosting_start_date_step(registration)
     return {
-      date: (registration.housing_data['availability'] || [])[0],
+      date: ((registration.housing_data || {})['availability'] || [])[0],
       min_date: registration.conference.min_arrival_date.to_date,
       max_date: registration.conference.max_departure_date.to_date,
       conference_start_date: registration.conference.start_date,
@@ -213,12 +220,13 @@ module RegistrationControllerHelper
   def hosting_start_date_review_data(registration)
     return {
       type: :date,
-      value: (registration.housing_data['availability'] || [])[0]
+      value: ((registration.housing_data || {})['availability'] || [])[0]
     }
   end
 
   def hosting_start_date_step_update(registration, params)
     if params[:date].present?
+      registration.housing_data ||= {}
       registration.housing_data['availability'] ||= [nil, nil]
       registration.housing_data['availability'][0] = Date.parse(params[:date])
       end_date = registration.housing_data['availability'][1]
@@ -243,7 +251,7 @@ module RegistrationControllerHelper
 
   def hosting_end_date_step(registration)
     return {
-      date: (registration.housing_data['availability'] || [])[1],
+      date: ((registration.housing_data || {})['availability'] || [])[1],
       min_date: registration.conference.min_arrival_date.to_date,
       max_date: registration.conference.max_departure_date.to_date,
       conference_start_date: registration.conference.start_date,
@@ -254,12 +262,13 @@ module RegistrationControllerHelper
   def hosting_end_date_review_data(registration)
     return {
       type: :date,
-      value: (registration.housing_data['availability'] || [])[1]
+      value: ((registration.housing_data || {})['availability'] || [])[1]
     }
   end
 
   def hosting_end_date_step_update(registration, params)
     if params[:date].present?
+      registration.housing_data ||= {}
       registration.housing_data['availability'] ||= [nil, nil]
       start_date = registration.housing_data['availability'][0]
       start_date = Date.parse(start_date) if start_date.is_a?(String)
@@ -284,7 +293,7 @@ module RegistrationControllerHelper
 
   def hosting_info_step(registration)
     return {
-      info: registration.housing_data['info']
+      info: (registration.housing_data || {})['info']
     }
   end
 
@@ -313,7 +322,7 @@ module RegistrationControllerHelper
 
   def hosting_other_step(registration)
     return {
-      other: registration.housing_data['notes']
+      other: (registration.housing_data || {})['notes']
     }
   end
 
@@ -325,6 +334,7 @@ module RegistrationControllerHelper
   end
 
   def hosting_other_step_update(registration, params)
+    registration.housing_data ||= {}
     registration.housing_data['notes'] = params[:other]
     registration.save!
     return { status: :complete }

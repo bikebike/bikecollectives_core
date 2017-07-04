@@ -126,12 +126,12 @@ module RegistrationControllerHelper
   end
 
   def housing_companion_email_step(registration)
-    { email: (registration.housing_data['companion'] || {})['email'] }
+    { email: ((registration.housing_data || {})['companion'] || {})['email'] }
   end
 
   def housing_companion_email_review_data(registration)
     email = housing_companion_email_step(registration)[:email]
-    user = User.find_user(email)
+    user = email.present? ? User.find_user(email) : nil
     return {
       value: user ? user.named_email : email,
       type: :string
@@ -140,6 +140,9 @@ module RegistrationControllerHelper
 
   def housing_companion_email_step_update(registration, params)
     email = params[:email].to_s.strip.downcase
+    registration.housing_data ||= {}
+    registration.housing_data['companion'] ||= {}
+
     if email.present? && email =~ /^.+\@.+\..+$/
       registration.housing_data['companion']['email'] = email
       new_user = User.find_user(email) || User.new(email: email)

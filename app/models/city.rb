@@ -67,6 +67,14 @@ class City < ActiveRecord::Base
       ] - ['', nil]).join(', ')
   end
 
+  def sortable_string
+    ([
+      country.present? ? translate_country : '',
+      territory.present? && country.present? ? translate_territory : '',
+      city
+      ] - ['', nil]).join(', ').downcase
+  end
+
   def self.search(str)
     cache = CityCache.search(str)
 
