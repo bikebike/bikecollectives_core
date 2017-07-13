@@ -54,7 +54,7 @@ module RegistrationControllerHelper
     city = if (registration.data || {})['city_id'].present?
              City.find(registration.data['city_id'])
            else
-             registration.city || City.from_request(request)
+             registration.city || registration.user.last_location || City.from_request(request)
            end
     return {
       step_name: (registration.data || {})['is_org_member'] == false ? :your_location : :org_location,

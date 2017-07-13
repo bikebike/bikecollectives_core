@@ -37,7 +37,8 @@ module RegistrationControllerHelper
         currency = registration.city.country == 'CA' ? :CAD : :USD
       end      
     else
-      currency = registration.conference.city.country == 'CA' ? :CAD : :USD
+      # currency = registration.conference.city.country == 'CA' ? :CAD : :USD
+      currency = registration.conference.default_currency
     end
 
     return currency

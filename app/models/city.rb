@@ -8,7 +8,7 @@ class City < ActiveRecord::Base
   geocoded_by :address
   translates :city
 
-  reverse_geocoded_by :latitude, :longitude, :address => :full_address
+  reverse_geocoded_by :latitude, :longitude, address: :full_address
   after_validation :geocode, if: ->(obj){ obj.country_changed? or obj.territory_changed? or obj.city_changed? or obj.latitude.blank? or obj.longitude.blank?  }
 
   def address

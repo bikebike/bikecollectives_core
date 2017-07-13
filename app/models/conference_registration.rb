@@ -42,7 +42,14 @@ class ConferenceRegistration < ActiveRecord::Base
   end
 
   def city
-    @_city ||= city_id.present? ? City.find(city_id) : nil
+    unless @_city.present?
+      if city_id.present?
+        @_city = City.find(city_id)
+      else
+        city_name = read_attribute(:city)
+        @_city = City.search(city_name) if city_name.present?
+      end
+    end
     return @_city
   end
 
@@ -50,17 +57,16 @@ class ConferenceRegistration < ActiveRecord::Base
     is_attending != 'n'
   end
 
-  def status(was = false)
+  def checked_in?
+    (data || {})['checked_in'].present?
+  end
+
+  def status
     # our user hasn't registered if their user doesn't exist or they haven't entered a city
-    return :unregistered if user.nil? || check(:city, was).blank?
-
-    # registration completes once a guest has entered a housing preference or
-    #   a housing provider has opted in or out of providing housing
-    return :preregistered unless
-      check(:housing, was).present? || !check(:can_provide_housing, was).nil?
-
-    # they must be registered
-    return :registered
+    return :unregistered if user.nil? || user.firstname.nil?
+    return :checked_in if checked_in?
+    return :registered if review_enabled?
+    return :incomplete
   end
 
   def potential_provider?

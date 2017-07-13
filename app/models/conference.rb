@@ -61,12 +61,12 @@ class Conference < ActiveRecord::Base
 
   def registered?(user)
     return false if user.nil?
-    registration = ConferenceRegistration.find_by(user_id: user.id, conference_id: id)
+    registration = registration_for(user)
     return registration ? registration.is_attending : false
   end
 
   def registration_exists?(user)
-    ConferenceRegistration.find_by(:user_id => user.id, :conference_id => id).present?
+    registration_for(user).present?
   end
 
   def registration_open
@@ -138,6 +138,10 @@ class Conference < ActiveRecord::Base
     ConferenceRegistration.where(conference_id: id, user_id: user).first
   end
 
+  def default_currency
+    city.country == 'CA' ? :CAD : :USD
+  end
+
   def self.default_payment_amounts
     [25, 50, 100]
   end
@@ -184,13 +188,15 @@ class Conference < ActiveRecord::Base
       what_to_bring: { show: what_to_bring.present?, value: what_to_bring, heading: 'articles.conferences.headings.what_to_bring' },
       volunteering_info: { show: volunteering_info.present?, value: volunteering_info, heading: 'articles.conferences.headings.volunteering_info' },
       additional_details: { show: additional_details.present?, value: additional_details, heading: false },
-      workshops: { show: false }
+      workshops: { show: false },
+      schedule: { show: false }
     }
   end
 
   def front_page_details
     [
-      :workshops
+      :workshop_info,
+      :schedule
     ]
   end
 
@@ -206,7 +212,8 @@ class Conference < ActiveRecord::Base
       :what_to_bring,
       :volunteering_info,
       :additional_details,
-      :workshops
+      :workshops,
+      :schedule
     ]
   end
 

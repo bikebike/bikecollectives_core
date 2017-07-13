@@ -93,6 +93,14 @@ class User < ActiveRecord::Base
     LocaleFollower.where(user_id: id, application_id: application_id, locale: locale).destroy_all
   end
 
+  def last_location
+    registration =
+        ConferenceRegistration.where('user_id = ? AND city_id IS NOT NULL', id).order('created_at DESC').first ||
+        ConferenceRegistration.where('user_id = ? AND city IS NOT NULL', id).order('created_at DESC').first
+
+    return registration.present? ? registration.city : nil
+  end
+
   def self.AVAILABLE_LANGUAGES
     I18n.respond_to?(:enabled_locales) ? I18n.enabled_locales : [:en, :es, :fr]
   end
