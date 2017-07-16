@@ -61,6 +61,10 @@ class ConferenceRegistration < ActiveRecord::Base
     (data || {})['checked_in'].present?
   end
 
+  def registered?
+    status == :checked_in || status == :registered
+  end
+
   def status
     # our user hasn't registered if their user doesn't exist or they haven't entered a city
     return :unregistered if user.nil? || user.firstname.nil?

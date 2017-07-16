@@ -159,11 +159,23 @@ module RegistrationControllerHelper
         companion_registration = registration.conference.registration_for(new_user)
         if companion_registration.present?
           if (companion_registration.housing_data || {})['companion'].present?
-            return {
-              status: :error,
-              message: 'companion_already_has_companion',
-              data: { email: email }
-            }
+            companion_companion = if companion_registration.housing_data['companion']['id'].present?
+                                    User.find(companion_registration.housing_data['companion']['id'])
+                                  else
+                                    User.find_user(companion_registration.housing_data['companion']['email'])
+                                  end
+            if companion_companion.id == registration.user.id
+              unless companion_registration.housing_data['companion']['id'].present?
+                companion_registration.housing_data['companion']['id'] = companion_companion.id
+                companion_registration.save!
+              end
+            else
+              return {
+                status: :error,
+                message: 'companion_already_has_companion',
+                data: { email: email }
+              }
+            end
           end
 
           if companion_registration.registration_complete?
