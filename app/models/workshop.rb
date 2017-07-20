@@ -76,11 +76,13 @@ class Workshop < ActiveRecord::Base
   end
 
   def can_show_interest?(user)
-    user.present? && !active_facilitator?(user)
+    return false unless user.present? && !active_facilitator?(user)
+    registration = conference.registration_for(user)
+    return registration.present? && registration.registered?
   end
 
   def interested?(user)
-    user.present? && !active_facilitator?(user) && WorkshopInterest.find_by(workshop_id: id, user_id: user.id)
+    can_show_interest?(user) && WorkshopInterest.find_by(workshop_id: id, user_id: user.id)
   end
 
   def interested_count

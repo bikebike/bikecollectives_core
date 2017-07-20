@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/lingua-franca/lingua_franca.git
-  revision: b60a220ae09b1f485f6ddf83e4cf59be859ad32d
-  branch: 2017
+  revision: e07626777d1ee6d4a3c6942d242f6c30dcb433ea
+  branch: master
   specs:
     lingua_franca (0.0.1)
       diffy
@@ -121,7 +121,7 @@ GEM
     haml (4.0.7)
       tilt
     htmlentities (4.3.4)
-    http_accept_language (2.1.0)
+    http_accept_language (2.1.1)
     i18n (0.8.1)
     image_optimizer (1.7.0)
     jwt (1.5.6)

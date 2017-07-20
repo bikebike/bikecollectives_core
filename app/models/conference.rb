@@ -135,7 +135,10 @@ class Conference < ActiveRecord::Base
   end
 
   def registration_for(user)
-    ConferenceRegistration.where(conference_id: id, user_id: user).first
+    user = user.id if user.is_a?(User)
+    @registration_cache ||= {}
+    @registration_cache[user] ||= ConferenceRegistration.where(conference_id: id, user_id: user).first
+    return @registration_cache[user]
   end
 
   def default_currency

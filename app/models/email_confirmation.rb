@@ -14,7 +14,7 @@ class EmailConfirmation < ActiveRecord::Base
       self.token = generate_token
 
       # conflicts should be extremely rare, but let's just be sure
-      if EmailConfirmation.exists?(:token => self.token)
+      if EmailConfirmation.exists?(token: self.token)
         self.token = nil # keep the loop going
         # because we generate the token based on the time, just make sure
         #  some time has passed

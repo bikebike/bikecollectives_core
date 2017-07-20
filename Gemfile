@@ -15,7 +15,7 @@ gemspec
 
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 gem 'sqlite3'
-gem 'lingua_franca', git: 'https://github.com/lingua-franca/lingua_franca.git', branch: '2017'
+gem 'lingua_franca', git: 'https://github.com/lingua-franca/lingua_franca.git', branch: 'master'
 gem 'carrierwave'
 gem 'carrierwave-imageoptimizer'
 gem 'mini_magick'
