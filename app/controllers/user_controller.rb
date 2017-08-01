@@ -120,8 +120,12 @@ class UserController < ApplicationController
     end
     
     # create the user
-    session = @@_session if Rails.env.test?
-    info = session[:oauth_update_user_info]
+    session = if Rails.env.test?
+                @@_session
+              else
+                request.session
+              end
+    info = session[:oauth_update_user_info] || {}
     user = User.new(email: params[:email], firstname: info['name'], fb_id: info['id'])
     user.save!
 
