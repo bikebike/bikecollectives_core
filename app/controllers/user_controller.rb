@@ -11,13 +11,16 @@ class UserController < ApplicationController
   end
 
   def do_confirm
-    confirm_email(
-        params[:email],
-        params[:token],
-        params[:dest] || (
-          request.present? && request.referer.present? ?
-            request.referer.gsub(/^.*?\/\/.*?\//, '/') :
-            settings_path(trailing_slash: true)))
+    destination = params[:dest] || (
+        request.present? && request.referer.present? ?
+          request.referer.gsub(/^.*?\/\/.*?\//, '/') :
+          settings_path(trailing_slash: true))
+    if params[:email].present? && params[:email] =~ /^.+@.+\..+/
+      confirm_email(params[:email], params[:token], destination)
+    else
+      flash[:error] = :email_required
+      redirect_to destination
+    end
   end
 
   def user_logout
