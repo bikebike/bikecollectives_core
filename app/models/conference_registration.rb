@@ -77,7 +77,7 @@ class ConferenceRegistration < ActiveRecord::Base
     return false unless city.present? && conference.present?
     if @_potential_provider.nil?
       conditions = conference.provider_conditions || Conference.default_provider_conditions
-      @_potential_provider = City.distance_less_than(conference.city, city, conditions['distance']['number'], conditions['distance']['unit'])
+      @_potential_provider = City.distance_less_than(conference.city, city, (conditions['distance']['number'] || 0).to_i, conditions['distance']['unit'])
     end
     return @_potential_provider
   end
