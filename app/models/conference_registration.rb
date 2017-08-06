@@ -102,6 +102,13 @@ class ConferenceRegistration < ActiveRecord::Base
     return city.to_s
   end
 
+  def host
+    if housing_data.present? && housing_data['host'].present?
+      return ConferenceRegistration.find(housing_data['host'])
+    end
+    return nil
+  end
+
 private
   def check(field, was)
     send("#{field}#{was ? '_was' : ''}")

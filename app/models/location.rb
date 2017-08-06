@@ -42,6 +42,17 @@ class Location < ActiveRecord::Base
     ].join("\n")
   end
 
+  def self.find_location(address, city)
+    location = Location.where(street: address, city_id: city.is_a?(City) ? city.id : city).first
+
+    unless location.present?
+      location = Location.from_city_address(address, city)
+      location.save!
+    end
+
+    return location
+  end
+
   def self.from_city_address(address, city)
     return nil unless city.present?
     location = Geocoder.search("#{address}, #{city.to_s}", language: 'en').first
