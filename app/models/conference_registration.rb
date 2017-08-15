@@ -41,6 +41,10 @@ class ConferenceRegistration < ActiveRecord::Base
     User.AVAILABLE_LANGUAGES
   end
 
+  def guests
+    return nil unless can_provide_housing
+  end
+
   def city
     unless @_city.present?
       if city_id.present?
@@ -107,6 +111,18 @@ class ConferenceRegistration < ActiveRecord::Base
       return ConferenceRegistration.find(housing_data['host'])
     end
     return nil
+  end
+
+  def guests
+    space = {}
+    ConferenceRegistration.where(conference_id: conference_id).select do |r|
+      data = r.housing_data || {}
+      if data['host'] == id
+        space[data['space']] ||= []
+        space[data['space']] << r
+      end
+    end
+    return space
   end
 
 private
