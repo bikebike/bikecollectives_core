@@ -62,7 +62,7 @@ class Conference < ActiveRecord::Base
   def registered?(user)
     return false if user.nil?
     registration = registration_for(user)
-    return registration ? registration.is_attending : false
+    return registration ? registration.attending? : false
   end
 
   def registration_exists?(user)
