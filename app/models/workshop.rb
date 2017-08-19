@@ -157,6 +157,20 @@ class Workshop < ActiveRecord::Base
     Comment.create_for(self, user, comment)
   end
   
+  def validate_block!(workshop_blocks)
+    if block.present?
+      block_num = block['block'].to_i
+      if block['block'].nil? ||
+          block_num >= workshop_blocks.length ||
+          workshop_blocks[block_num]['days'].index { |b| b.to_s == block['day'].to_s }.nil? ||
+          !EventLocation.exists?(event_location_id)
+        self.block = nil
+        self.event_location_id = nil
+        self.save!
+      end
+    end
+  end
+
   private
     def make_slug
       if !self.slug

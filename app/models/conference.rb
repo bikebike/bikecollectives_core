@@ -11,8 +11,7 @@ class Conference < ActiveRecord::Base
   has_many :organizations, through: :conference_host_organizations
   has_many :conference_administrators, dependent: :destroy
   has_many :administrators, through: :conference_administrators, source: :user
-  has_many :event_locations
-  
+  has_many :event_locations  
   has_many :workshops
 
   accepts_nested_attributes_for :conference_host_organizations, reject_if: proc {|u| u[:organization_id].blank?}, allow_destroy: true
@@ -220,4 +219,32 @@ class Conference < ActiveRecord::Base
     ]
   end
 
+  def post_conference_survey_questions
+    {
+      website:           [:rating, :comment],
+      housing:           [:rating, :comment],
+      workshop_schedule: [:rating, :comment],
+      events:            [:rating, :comment],
+      venues:            [:rating, :comment],
+      food:              [:rating, :comment],
+      bikes:             [:rating, :comment],
+      final_meeting:     [:rating, :comment],
+      communication:     [:rating, :comment],
+      other:             [:comment]
+    }
+  end
+
+  def post_conference_survey_version
+    slug
+  end
+
+  def post_conference_survey_name
+    :post_conference
+  end
+
+  def validate_workshop_blocks
+    workshops.each do |workshop|
+      workshop.validate_block!(workshop_blocks)
+    end
+  end
 end
