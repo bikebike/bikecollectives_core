@@ -242,6 +242,10 @@ class Conference < ActiveRecord::Base
     :post_conference
   end
 
+  def schedule_interval
+    0.25
+  end
+
   def validate_workshop_blocks
     workshops.each do |workshop|
       workshop.validate_block!(workshop_blocks)
