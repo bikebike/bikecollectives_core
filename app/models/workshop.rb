@@ -85,6 +85,22 @@ class Workshop < ActiveRecord::Base
     can_show_interest?(user) && WorkshopInterest.find_by(workshop_id: id, user_id: user.id)
   end
 
+  def users_by_role(role)
+    users = []
+    workshop_facilitators.each do |f|
+      users << f.user_id if f.role.to_sym == role.to_sym
+    end
+    return users
+  end
+
+  def creator
+    users_by_role(:creator).first
+  end
+
+  def collaborators
+    users_by_role(:collaborator)
+  end
+
   def interested_count
     interested.size
   end
