@@ -4,10 +4,10 @@ class Workshop < ActiveRecord::Base
   belongs_to :conference
   belongs_to :event_location
 
-  has_many :workshop_facilitators, :dependent => :destroy
-  has_many :users, :through => :workshop_facilitators
+  has_many :workshop_facilitators, dependent: :destroy
+  has_many :users, through: :workshop_facilitators
 
-  accepts_nested_attributes_for :workshop_facilitators, :reject_if => proc {|u| u[:user_id].blank?}, :allow_destroy => true
+  accepts_nested_attributes_for :workshop_facilitators, reject_if: proc { |u| u[:user_id].blank? }, allow_destroy: true
 
   before_create :make_slug
 
@@ -72,11 +72,11 @@ class Workshop < ActiveRecord::Base
   end
 
   def can_delete?(user)
-    creator?(user) || conference.host?(user)
+    (creator?(user) && conference.registration_open) || conference.host?(user)
   end
 
   def can_show_interest?(user)
-    return false unless user.present? && !active_facilitator?(user)
+    return false unless user.present? && !active_facilitator?(user) && conference.registration_open
     registration = conference.registration_for(user)
     return registration.present? && registration.registered?
   end

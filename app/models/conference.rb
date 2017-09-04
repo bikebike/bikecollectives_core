@@ -72,8 +72,8 @@ class Conference < ActiveRecord::Base
     registration_status == :open
   end
 
-  def can_register?
-    registration_status == :open || registration_status == :pre
+  def can_register?(user = nil)
+    registration_status == :open || registration_status == :pre || registered?(user)
   end
 
   def registration_status
@@ -220,22 +220,33 @@ class Conference < ActiveRecord::Base
   end
 
   def post_conference_survey_questions
+    # numerical = (1..5)
+    # agreement = [:strongly_agree, :agree, :neither, :disagree, :strongly_disagree]
+    satisfaction = [:very_unsatisfied, :unsatisfied, :neutral, :satisfied, :very_satisfied]
+    likelihood = [:not_likely, :likely, :very_likely]
     {
-      website:           [:rating, :comment],
-      housing:           [:rating, :comment],
-      workshop_schedule: [:rating, :comment],
-      events:            [:rating, :comment],
-      venues:            [:rating, :comment],
-      food:              [:rating, :comment],
-      bikes:             [:rating, :comment],
-      final_meeting:     [:rating, :comment],
-      communication:     [:rating, :comment],
-      other:             [:comment]
+      years_attended:    { type: :likert, options: [:first, :two_to_four, :five_or_more] },
+      reattend_again:    { type: :likert, options: likelihood },
+      services:          { type: :multi_likert, options: satisfaction, waive_option: :na, comment: true, questions: [
+          :housing,
+          :bike,
+          :food,
+          :schedule,
+          :events,
+          :workshops,
+          :website] },
+      experience:        { type: :open_ended, comment_size: :small },
+      improvement_ideas: { type: :open_ended },
+      comments:          { type: :open_ended }
     }
   end
 
   def post_conference_survey_version
     slug
+  end
+
+  def post_conference_survey_available?(user = nil)
+    is_public && !registration_open && (user.nil? || (user.is_a?(ConferenceRegistration) ? user : registration_for(user)).checked_in?)
   end
 
   def post_conference_survey_name
