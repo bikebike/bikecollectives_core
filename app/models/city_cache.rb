@@ -32,7 +32,7 @@ class CityCache < ActiveRecord::Base
     test_cache ||= {}
     
     # return the cached verion if we have it
-    return Geocoder::Result::Google.new(test_cache[str]) if test_cache[str].present?
+    return ::Geocoder::Result::Google.new(test_cache[str]) if test_cache[str].present?
 
     # otherwise store the search in the cache
     result = yield
@@ -40,7 +40,6 @@ class CityCache < ActiveRecord::Base
     # store it
     if result.present?
       test_cache[str] = result.data
-      puts test_cache
       File.open(file, 'w+') { |f| f.write(test_cache.to_json) }
     end
 
