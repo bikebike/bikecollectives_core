@@ -1,4 +1,7 @@
 require 'geocoder'
+# require 'geocoder/railtie'
+
+# Geocoder::Railtie.insert
 
 class CityCache < ActiveRecord::Base
   self.table_name = :city_cache
@@ -20,9 +23,9 @@ class CityCache < ActiveRecord::Base
 
     # we make a lot of calls to the Geocoder during tests, this takes extra time but more importantly we sometimes max out our calls
     # so we'll cache the results and allow them to be checked in to minimize on this
-    file = File.expand_path('./features/support/location_cache.yml')
-    puts file
-    test_cache = YAML.load_file(file) || {}
+    file = File.expand_path('./features/support/location_cache.json')
+    test_cache = JSON.parse(File.read(file)) if File.exist?(file)
+    test_cache ||= {}
     
     # return the cached verion if we have it
     return test_cache[str] if test_cache[str].present?
@@ -30,7 +33,7 @@ class CityCache < ActiveRecord::Base
     # otherwise store the search in the cache
     result = yield
     test_cache[str] = result
-    File.open(file, 'w+') { |f| f.write(test_cache.to_yaml) }
+    File.open(file, 'w+') { |f| f.write(test_cache.to_json) }
 
     return result
   end
