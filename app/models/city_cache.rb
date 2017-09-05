@@ -1,7 +1,4 @@
 require 'geocoder'
-# require 'geocoder/railtie'
-
-# Geocoder::Railtie.insert
 
 class CityCache < ActiveRecord::Base
   self.table_name = :city_cache
@@ -15,7 +12,7 @@ class CityCache < ActiveRecord::Base
 
   # cache this search term
   def self.cache(str, city_id)
-  	CityCache.create(city_id: city_id, search: normalize_string(str))
+  	# CityCache.create(city_id: city_id, search: normalize_string(str))
   end
   
   def self.cache_enabled_search(str, &block)
@@ -24,16 +21,26 @@ class CityCache < ActiveRecord::Base
     # we make a lot of calls to the Geocoder during tests, this takes extra time but more importantly we sometimes max out our calls
     # so we'll cache the results and allow them to be checked in to minimize on this
     file = File.expand_path('./features/support/location_cache.json')
-    test_cache = JSON.parse(File.read(file)) if File.exist?(file)
+    begin
+      test_cache = JSON.parse(File.read(file)) if File.exist?(file)
+    rescue; end
+
     test_cache ||= {}
     
     # return the cached verion if we have it
-    return test_cache[str] if test_cache[str].present?
+    if test_cache[str].present?
+      return Geocoder::Result::Google.new(test_cache[str])
+    end
 
     # otherwise store the search in the cache
     result = yield
-    test_cache[str] = result
-    File.open(file, 'w+') { |f| f.write(test_cache.to_json) }
+
+    # store it
+    if result.present?
+      test_cache[str] = result.data
+      puts test_cache
+      File.open(file, 'w+') { |f| f.write(test_cache.to_json) }
+    end
 
     return result
   end
