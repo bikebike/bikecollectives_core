@@ -216,7 +216,7 @@ class City < ActiveRecord::Base
     return nil
   end
 
-  def _search(str)
+  def self._search(str)
     location = CityCache.cache_enabled_search(str) { Geocoder.search(str, language: 'en').first }
 
     # return nil to indicate that the service is down
