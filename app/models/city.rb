@@ -82,7 +82,7 @@ class City < ActiveRecord::Base
     return cache.city if cache.present?
 
     # look up the city in the geocoder
-    location = Geocoder.search(str, language: 'en').first
+    location = CityCache.cache_enabled_search(str) { Geocoder.search(str, language: 'en').first }
 
     # return nil to indicate that the service is down
     return nil unless location.present?
@@ -201,10 +201,6 @@ class City < ActiveRecord::Base
 
   def self.from_request(request)
     begin
-      # if (request.remote_ip == '127.0.0.1' || request.remote_ip == '::1') && request.location
-      #   return request.location
-      # else
-      # end
       unless request.session['remote_ip'].present?
         if request.remote_ip =~ /^(127\.0\.0\.1|::1)$/
           session['remote_ip'] || (session['remote_ip'] = open("http://checkip.dyndns.org").first.gsub(/^.*\s([\d\.]+).*$/s, '\1').gsub(/[^\.\d]/, ''))
