@@ -1,8 +1,3 @@
-require 'geocoder'
-require 'geocoder/railtie'
-require 'geocoder/calculations'
-
-Geocoder::Railtie.insert
 
 class CityCache < ActiveRecord::Base
   self.table_name = :city_cache
@@ -32,7 +27,7 @@ class CityCache < ActiveRecord::Base
     test_cache ||= {}
     
     # return the cached verion if we have it
-    return ::Geocoder::Result::Google.new(test_cache[str]) if test_cache[str].present?
+    return test_cache[str] if test_cache[str].present?
 
     # otherwise store the search in the cache
     result = yield

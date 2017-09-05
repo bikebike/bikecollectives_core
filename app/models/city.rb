@@ -82,19 +82,20 @@ class City < ActiveRecord::Base
     return cache.city if cache.present?
 
     # look up the city in the geocoder
-    location = CityCache.cache_enabled_search(str) { Geocoder.search(str, language: 'en').first }
+    location = City._search(str)
 
     # return nil to indicate that the service is down
     return nil unless location.present?
+
     # see if the city is already present in our database
-    if location.data['place_id'].present?
-      city = City.find_by_place_id(location.data['place_id'])
+    if location['place_id'].present?
+      city = City.find_by_place_id(location['place_id'])
     else
       city = City.search(
           ([
-            location.data['city'] || location.data['locality'] || location.data['administrative_area_level_2'],
-            location.data['region_name'],
-            location.data['country_name']] - [nil, '']).join(', ')
+            location['city'] || location['locality'] || location['administrative_area_level_2'],
+            location['region_name'],
+            location['country_name']] - [nil, '']).join(', ')
         )
     end
 
@@ -110,9 +111,9 @@ class City < ActiveRecord::Base
       # and populate this map to eventually create the city if we need to
       city_data = {
           locale: :en,
-          latitude: location.data['geometry']['location']['lat'],
-          longitude: location.data['geometry']['location']['lng'],
-          place_id: location.data['place_id']
+          latitude: location['geometry']['location']['lat'],
+          longitude: location['geometry']['location']['lng'],
+          place_id: location['place_id']
         }
 
       # these things are definitely not cities, make sure we don't think they're one
@@ -142,7 +143,7 @@ class City < ActiveRecord::Base
         ]
 
       searched_component = nil
-      location.data['address_components'].each do | component |
+      location['address_components'].each do | component |
         property = component_alises[component['types'].first]
         city_data[property] = component['short_name'] if property.present?
 
@@ -151,7 +152,7 @@ class City < ActiveRecord::Base
         # and not an address or country
         # some places are not labeled 'locality', search for 'Halifax NS' for example and you will
         # get 'administrative_area_level_2' since Halifax is a municipality
-        if component['types'] == location.data['types'] && !not_a_city.include?(component['types'].first)
+        if component['types'] == location['types'] && !not_a_city.include?(component['types'].first)
           searched_component = component['short_name']
         end
       end
@@ -169,13 +170,13 @@ class City < ActiveRecord::Base
       unless city.present?
         city = City.new(city_data)
         # if we found exactly what we were looking for, keep these location details
-        # otherwise we may have searched for 'The Bronx' and set the sity the 'New York' but these details will be about The Bronx
+        # otherwise we may have searched for 'The Bronx' and set the city the 'New York' but these details will be about The Bronx
         # so if we try to show New York on a map it will always point to The Bronx, not very fair to those from Staten Island
         unless city_data[:city] == searched_component
-          new_location = Geocoder.search(str, language: 'en').first
-          city.latitude = new_location.data['geometry']['location']['lat']
-          city.longitude = new_location.data['geometry']['location']['lng']
-          city.place_id = new_location.data['place_id']
+          new_location = City._search(str)
+          city.latitude = new_location['geometry']['location']['lat']
+          city.longitude = new_location['geometry']['location']['lng']
+          city.place_id = new_location['place_id']
         end
         
         # and create the new city
@@ -213,5 +214,14 @@ class City < ActiveRecord::Base
     rescue
     end
     return nil
+  end
+
+  def _search(str)
+    location = CityCache.cache_enabled_search(str) { Geocoder.search(str, language: 'en').first }
+
+    # return nil to indicate that the service is down
+    return nil unless location.present?
+
+    return location.is_a?(Hash) ? location : location.data
   end
 end
