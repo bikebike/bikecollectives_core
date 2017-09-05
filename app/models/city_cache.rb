@@ -1,4 +1,8 @@
 require 'geocoder'
+require 'geocoder/railtie'
+require 'geocoder/calculations'
+
+Geocoder::Railtie.insert
 
 class CityCache < ActiveRecord::Base
   self.table_name = :city_cache
@@ -12,7 +16,7 @@ class CityCache < ActiveRecord::Base
 
   # cache this search term
   def self.cache(str, city_id)
-  	# CityCache.create(city_id: city_id, search: normalize_string(str))
+  	CityCache.create(city_id: city_id, search: normalize_string(str))
   end
   
   def self.cache_enabled_search(str, &block)
@@ -28,9 +32,7 @@ class CityCache < ActiveRecord::Base
     test_cache ||= {}
     
     # return the cached verion if we have it
-    if test_cache[str].present?
-      return Geocoder::Result::Google.new(test_cache[str])
-    end
+    return Geocoder::Result::Google.new(test_cache[str]) if test_cache[str].present?
 
     # otherwise store the search in the cache
     result = yield
