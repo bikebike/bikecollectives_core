@@ -254,7 +254,7 @@ class Conference < ActiveRecord::Base
   end
 
   def schedule_interval
-    0.25
+    100.to_f / 6 # a sixth of an hour is 10 minutes
   end
 
   def validate_workshop_blocks
